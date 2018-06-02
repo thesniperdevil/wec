@@ -1,184 +1,70 @@
 -------WRITTEN BY: DrunkFlamingo for Vandy
 --last update 2/28/18
 
-events = get_events();
+
+isLogAllowed = true 
 
 
---main function
---decides what sub the player is and locks their rituals at start.
---rites must be specified here.
-function wec_rites()
 
-cm:set_saved_value("vandy_rites", true);
-out("OWR SCRIPT IS RUNNING");
 
-vandy_rite_unlock_listeners();
-vandy_scripted_effects();
+function WEC_REFRESH_LOG()
+    if not isLogAllowed then
+        return;
+    end
+    
+    local logTimeStamp = os.date("%d, %m %Y %X")
+    --# assume logTimeStamp: string
+    
+    local popLog = io.open("WEC_LOG.txt","w+")
+    popLog :write("NEW LOG ["..logTimeStamp.."] \n")
+    popLog :flush()
+    popLog :close()
+end
 
-out("OWR INIT COMPLETE");
-end;
+--v function(text: string)
+function OWR_LOG(text)
+	ftext = "OWR"
+    if not isLogAllowed then
+      return;
+    end
+
+  local logText = tostring(text)
+  local logContext = tostring(ftext)
+  local logTimeStamp = os.date("%d, %m %Y %X")
+  local popLog = io.open("sfo_log.txt","a")
+  --# assume logTimeStamp: string
+  popLog :write("WEC:  "..logText .. "    : [" .. logContext .. "] : [".. logTimeStamp .. "]\n")
+  popLog :flush()
+  popLog :close()
+end
+
+WEC_REFRESH_LOG()
+
 
 function vandy_scripted_effects()
 
 --Special scripted rite effects!
 
-out("OWR: setting up scripted effect listeners");
+OWR_LOG("OWR: setting up scripted effect listeners");
 
 vandy_effects_list_wh_main_ritual_chs_gods = {
 "wh_main_ritual_chs_gods_slaanesh",
 "wh_main_ritual_chs_gods_tzeentch",
 "wh_main_ritual_chs_gods_khorne",
 "wh_main_ritual_chs_gods_nurgle"
-};
+} --: vector<string>
 
 vandy_effects_list_wh_main_ritual_grn_gorknmork = {
 "wh_main_ritual_grn_gorknmork_gork",
 "wh_main_ritual_grn_gorknmork_mork"
-};
+} --: vector<string>
 
 
 --Dilemma for Gork n' Mork & Chaos Gods
 
-core:add_listener(
-    "OWR_Dilemma_Listener",
-    "RitualCompletedEvent",
-    function(context)
-        return context:ritual():ritual_category() == "STANDARD_RITUAL";
-    end,
-    function(context)
-        local ritual = context:ritual();
-        local ritual_key = ritual:ritual_key();
-        local faction = context:performing_faction();
-        local faction_name = faction:name();
-        local index = cm:random_number(#vandy_effects_list_wh_main_ritual_chs_gods);
-        local waaaagh = cm:random_number(#vandy_effects_list_wh_main_ritual_grn_gorknmork);
-        if ritual_key == "wh_main_ritual_chs_gods" then
-            if faction:is_human() then 
-                cm:trigger_dilemma(faction_name, "wh_main_ritual_chs_gods", true);
-            else 
-                cm:apply_effect_bundle(vandy_effects_list_wh_main_ritual_chs_gods[index], faction_name, 10);
-            end
-        elseif ritual_key == "wh_main_ritual_grn_gorknmork" then
-            if faction:is_human() then
-                cm:trigger_dilemma(faction_name, "wh_main_ritual_grn_gorknmork", true);
-            else
-                cm:apply_effect_bundle(vandy_effects_list_wh_main_ritual_grn_gorknmork[waaaagh], faction_name, 5);
-            end
-        end
-    end,
-    true);
-	
---Dwarf Holds movement script	
-	
-core:add_listener(
-    "OWR_Holds_Movement",
-    "RitualCompletedEvent",
-    function(context)
-        return context:ritual():ritual_category() == "STANDARD_RITUAL";
-    end,
-    function(context)
-        local ritual = context:ritual();
-        local ritual_key = ritual:ritual_key();
-        local faction = context:performing_faction();
-        local faction_name = faction:name();
-		out("OWR: "..tostring(faction_name).." preformed "..tostring(ritual_key).." rite");
-        if ritual_key == "wh_main_ritual_dwf_holds" then
-            dwf_holds_listeners(faction)
-        end
-    end,
-    true);
-	
-core:add_listener(
-		"IntrigueRiteListener",
-		"RitualCompletedEvent",
-		function(context)
-			return context:ritual():ritual_category() == "STANDARD_RITUAL";
-		end,
-		function(context)
-			local ritual = context:ritual();
-			local ritual_key = ritual:ritual_key();
-			local faction = context:performing_faction();
-			local factions_trading_with = faction:factions_trading_with();
-			out("TP: Standard ritual completed. Checking for Intrigue rite");
-			
-			if ritual_key == "wh_main_ritual_vmp_intrigue" then
-			out("TP: Intrigue Rite detected");
-			
-				if factions_trading_with:num_items() > 0 then
-				out("TP: Rite 'owner' has trading partners");
-				
-					for i = 0, factions_trading_with:num_items() - 1 do
-						local current_faction = factions_trading_with:item_at(i);
-						
-						apply_effect_to_regions(current_faction:name(),"tp_trade_corr_bundle_region_vamp")
-						out("TP: Effect being added.");
-					end;
-				end;
-			end;
-		end,
-		true
-	);	
-	
-core:add_listener(
-	"cultists",
-	"RitualCompletedEvent",
-	function(context)
-		return context:ritual():ritual_category() == "STANDARD_RITUAL";
-	end,
-	function(context)
-		local ritual = context:ritual();
-		local ritual_key = ritual:ritual_key();
-		local faction = context:performing_faction();
-		
-		if ritual_key == "wh_main_ritual_chs_cults" then
-			df_spawn_cultists(faction:name());
-		end;
-	end,
-	true);
-	
-core:add_listener(
-	"empdilemmas",
-	"RitualCompletedEvent",
-	function(context)
-		return context:ritual():ritual_category() == "STANDARD_RITUAL";
-	end,
-	function(context)
-		local ritual = context:ritual();
-		local ritual_key = ritual:ritual_key();
-		local faction = context:performing_faction();
-		
-		if ritual_key == "wh_main_ritual_emp_policy" then
-			OWR_emp_policy(faction)
-		end;
-	end,
-	true);
-	
-core:add_listener(
-	"chs_cult_corruption",
-	"RitualCompletedEvent",
-	function(context)
-		return context:ritual():ritual_category() == "STANDARD_RITUAL";
-	end,
-	function(context)
-		local ritual = context:ritual();
-		local ritual_key = ritual:ritual_key();
-		local faction = context:performing_faction();
-		
-		if ritual_key == "wh_main_ritual_chs_cults" then
-			OWR_chs_cults(faction)
-		end;
-	end,
-	true);
-		
-	
-	
-	
-	
-end;
-
 
 ---Overwritin' here instead of there, gotta add them peasants!
-
+--v [NO_CHECK] function(faction: CA_FACTION)
 function Calculate_Economy_Penalty(faction)
     if Is_Bretonnian(faction:name()) and faction:is_human() then
         out_P("---- Calculate_Economy_Penalty ----");
@@ -284,32 +170,31 @@ function Calculate_Economy_Penalty(faction)
     end
 end;
 
-
+--v function(faction_name: string)
 function df_spawn_cultists(faction_name)
 
-out("OWR: spawning cultists")
+OWR_LOG("OWR: spawning cultists")
 
 local army = cm:get_highest_ranked_general_for_faction(faction_name);
-out("1")
+OWR_LOG("1")
 local spawnx = army:logical_position_x() + 3;
-out("2")
+OWR_LOG("2")
 local spawny = army:logical_position_y() - 3;
-out("3")
+OWR_LOG("3")
 local spawnregion = "wh_main_goromandy_mountains_baersonlings_camp"
-out("4")
+OWR_LOG("4")
 local unit_list = "wh_dlc01_chs_inf_forsaken_0,wh_dlc01_chs_inf_forsaken_0,wh_main_chs_inf_chosen_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_warriors_1,wh_main_chs_inf_chaos_warriors_1,wh_main_chs_inf_chaos_warriors_1,wh_main_chs_mon_chaos_spawn,wh_main_chs_mon_chaos_spawn,wh_main_chs_mon_chaos_warhounds_0"
-out("5")
+OWR_LOG("5")
 local turn = cm:model():turn_number();
 
 
-out("spawning army");
+OWR_LOG("spawning army");
 	cm:create_force(
 	"wh2_main_chs_chaos_incursion_def",
 	unit_list,
 	spawnregion,
 	spawnx,
 	spawny,
-	"spawn.."..tostring(turn).."cultists",
 	true,
 	true);
 	
@@ -322,7 +207,8 @@ out("spawning army");
 
 end;
 
-function OWR_chs_cults(faction)
+--v function()
+function OWR_chs_cults()
 	
 	local majorcities_list = {
 		"wh_main_reikland_altdorf",
@@ -341,11 +227,11 @@ function OWR_chs_cults(faction)
 		"wh_main_tilea_miragliano",
 		"wh_main_eastern_border_princes_akendorf",
 		"wh_main_western_border_princes_myrmidens"
-	};	
+	}--: vector<string>
 		
 	
 	for i = 1, #majorcities_list do
-		cm:apply_effect_bundle_to_region("wh_main_ritual_chs_cults_corruption", majorcities[i], 10)
+		cm:apply_effect_bundle_to_region("wh_main_ritual_chs_cults_corruption", majorcities_list[i], 10)
 	end;
 end;
 
@@ -353,18 +239,19 @@ end;
 
 --function (re)applies region effect bundle to all capitals of given faction.
 --expects faction():name() and a string for the effect bundle name.
+--v function(faction: string, effect_bundle: string)
 function apply_effect_to_regions(faction, effect_bundle)
 	local effectBundle = effect_bundle
 	local thisFaction = cm:model():world():faction_by_key(faction);
 	local regionList = thisFaction:region_list();
-	out("TP: effect function called");
+	OWR_LOG("TP: effect function called");
 	
 	for i = 0, regionList:num_items() - 1 do
 		local current_region = regionList:item_at(i);
-		out("TP: checking regions with trade");
+		OWR_LOG("TP: checking regions with trade");
 			
 		if current_region:is_province_capital() then
-			out("TP: applying bundle to capital.");
+			OWR_LOG("TP: applying bundle to capital.");
 			cm:remove_effect_bundle_from_region(effectBundle, current_region:name());
 			cm:apply_effect_bundle_to_region(effectBundle, current_region:name(), 10);
 		end;
@@ -378,17 +265,17 @@ end;
 
 
 
-	
+--v function(faction: CA_FACTION)
 function dwf_holds_listeners(faction)
-out("began dwarf hold for "..tostring(faction:name()).." applying the effect bundles");
-local current_faction = cm:get_faction((faction:name());
+OWR_LOG("began dwarf hold for "..tostring(faction:name()).." applying the effect bundles");
+local current_faction = cm:get_faction((faction:name()));
 local region_list = current_faction:region_list();
 
 
 for i = 0, region_list:num_items() - 1 do
 	local current_region = region_list:item_at(i);
 	local current_region_name = current_region:name();
-	out("applying to "..tostring(current_region_name).." for dwf_holds");		
+	OWR_LOG("applying to "..tostring(current_region_name).." for dwf_holds");		
 	cm:apply_effect_bundle_to_region("wh_main_ritual_dwf_holds_movement", current_region_name, 5);
 	
 end
@@ -397,7 +284,7 @@ end
 	
 end;
 
-
+--v function(faction: CA_FACTION)
 function OWR_emp_policy(faction)
     if faction:is_human() then
         local dilemma_list = {
@@ -405,7 +292,7 @@ function OWR_emp_policy(faction)
             "wh_main_ritual_emp_policy_enemies",
             "wh_main_ritual_emp_policy_friends",
             "wh_main_ritual_emp_policy_leaders"
-        };
+        }--:vector<string>
         
         local index = cm:random_number(#dilemma_list);
         
@@ -428,7 +315,7 @@ function OWR_emp_policy(faction)
             "wh_main_ritual_emp_policy_leaders_army",
             "wh_main_ritual_emp_policy_leaders_cults",
             "wh_main_ritual_emp_policy_leaders_cities"
-        };
+        }--: vector<string>
         
         local index = cm:random_number(#effect_bundle_list);
         local faction_name = faction:name();
@@ -453,12 +340,15 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_bst_vicious_shadows",
 			["event_name"] = "CharacterCompletedBattle",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					local pb = context:pending_battle();
-					
+					--# assume character: CA_CHAR
+					--# assume pb: CA_PENDING_BATTLE
 					return character:faction():name() == faction_name and pb:ambush_battle() and character == pb:attacker() and character:won_battle();
-				end
+			end
 		},
 
 		--Vicious Heart--
@@ -468,7 +358,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_bst_vicious_heart",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and character:character_type("wizard") and character:rank() >= 10;
@@ -481,7 +373,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_bst_vicious_herd",
 			["event_name"] = "MilitaryForceBuildingCompleteEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					return context:building() == "wh_dlc03_horde_beastmen_gors_4" and context:character():faction():is_human();
 				end
 		},
@@ -493,7 +387,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_bst_vicious_demise",
             ["event_name"] = "CharacterRazedSettlement",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                 
                     if context:character():faction():name() == faction_name then
                 
@@ -517,7 +413,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_vmp_intrigue",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 									
 					return context:faction():name() == faction_name and context:faction():has_technology("tech_vmp_blood_07")
 				end
@@ -530,7 +428,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_vmp_willpower",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					
 					return building:faction():name() == faction_name and building:name() == "wh_main_vmp_balefire_3";
@@ -541,7 +441,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_vmp_willpower",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_vmp_balefire_3");
@@ -555,7 +457,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_vmp_strength",
             ["event_name"] = "CharacterCompletedBattle",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                     local victory_count = cm:get_saved_value("wh_main_ritual_vmp_strength_count");
                     if victory_count == nil then victory_count = 0 end
                     
@@ -575,7 +479,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_vmp_dominance",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -590,7 +496,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_dwf_guilds",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 									
 					return context:faction():name() == faction_name and context:faction():has_technology("tech_dwf_civ_3_3")
 				end
@@ -603,7 +511,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_dwf_holds",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local faction = context:character():faction();
 					
 					return faction:name() == faction_name and faction:region_list():num_items() >= 6;
@@ -617,7 +527,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_dwf_underway",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -631,7 +543,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_dwf_oath",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					
 					return building:faction():name() == faction_name and building:name() == "wh_main_dwf_slayer_2";
@@ -643,7 +557,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_dwf_oath",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_dwf_slayer_2");
@@ -658,7 +574,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_emp_gunpowder",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					
 					return building:faction():name() == faction_name and building:name() == "wh_main_emp_forges_3";
@@ -670,7 +588,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_emp_gunpowder",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_emp_forges_3");
@@ -684,7 +604,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_emp_faith",
 			["event_name"] = "CharacterCharacterTargetAction",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and character:character_type("wizard");
@@ -695,7 +617,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_emp_faith",
 			["event_name"] = "CharacterGarrisonTargetAction",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and character:character_type("wizard");
@@ -709,7 +633,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_emp_steel",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local faction = context:faction();
 					
 					if faction:name() == faction_name then
@@ -736,7 +662,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_emp_policy",			
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -754,7 +682,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_grn_waaagh",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local faction = context:faction();
 					
 					if faction:name() == faction_name then
@@ -781,7 +711,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_grn_badmoon",
 			["event_name"] = "CharacterCompletedBattle",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					local pb = context:pending_battle();
 					
@@ -797,7 +729,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_grn_gorknmork",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -811,7 +745,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_grn_spidergod",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					
 					return building:faction():name() == faction_name and building:name() == "wh_main_grn_forest_beasts_3";
@@ -823,7 +759,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_grn_spidergod",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_grn_forest_beasts_3");
@@ -839,7 +777,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_winter",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					--return false;
 					return building:faction():name() == faction_name and building:name() == "wh_main_emp_settlement_major_5";
@@ -851,7 +791,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_winter",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					--return false;
 					return building:faction():name() == faction_name and building:name() == "wh_main_emp_settlement_major_5";
@@ -864,7 +806,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_winter",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					--return false;
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_emp_settlement_major_5");
@@ -876,7 +820,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_winter",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					--return false;
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_emp_settlement_major_5");
@@ -890,7 +836,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_levy",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local faction = context:faction();
 					
 					if faction:name() == faction_name then
@@ -915,7 +863,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_levy",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local faction = context:faction();
 					
 					if faction:name() == faction_name then
@@ -944,7 +894,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_tide",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -956,7 +908,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_ksl_tide",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -971,7 +925,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_ksl_emissaries",
             ["event_name"] = "FactionTurnStart",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                     local human_factions = cm:get_human_factions();
                     local chaos = cm:get_faction("wh_main_chs_chaos");
                     for i = 1, #human_factions do 
@@ -989,7 +945,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_ksl_emissaries",
             ["event_name"] = "FactionTurnStart",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                     local human_factions = cm:get_human_factions();
                     local chaos = cm:get_faction("wh_main_chs_chaos");
                     for i = 1, #human_factions do 
@@ -1012,7 +970,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_wef_athelloren",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					
 					return building:faction():name() == faction_name and building:name() == "wh_dlc05_wef_oak_of_ages_2";
@@ -1024,7 +984,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_wef_athelloren",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local region = context:garrison_residence():region();
 					
 					return context:character():faction():name() == faction_name and (region:building_exists("wh_dlc05_wef_oak_of_ages_2") or region:building_exists("wh_dlc05_wef_oak_of_ages_3") or region:building_exists("wh_dlc05_wef_oak_of_ages_4") or region:building_exists("wh_dlc05_wef_oak_of_ages_5"));
@@ -1038,7 +1000,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_wef_anathraema",
             ["event_name"] = "CharacterPostBattleSlaughter",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                     if context:character():faction():name() == faction_name then
                         local slaughter_count = cm:get_saved_value("wh_main_ritual_wef_anathraema_count");
                         if slaughter_count == nil then slaughter_count = 0 end
@@ -1060,7 +1024,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_wef_loec",
 			["event_name"] = "FactionTurnStart",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 									
 					return context:faction():name() == faction_name and context:faction():has_technology("tech_dlc05_1_loec")
 				end
@@ -1074,11 +1040,13 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_wef_isha",
 			["event_name"] = "PositiveDiplomaticEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local proposer = context:proposer();
 					local recipient = context:recipient();
 					
-					return ((proposer:is_human() and recipient:subculture() == "wh2_main_sc_hef_high_elves") or (recipient:is_human() and proposer:subculture() == "wh2_main_sc_hef_high_elves")) and faction_has_trade_agreement_with_faction(proposer, recipient);
+					return ((proposer:is_human() and recipient:subculture() == "wh2_main_sc_hef_high_elves") or (recipient:is_human() and proposer:subculture() == "wh2_main_sc_hef_high_elves")) and cm:faction_has_trade_agreement_with_faction(proposer, recipient);
 					
 				end
 		},
@@ -1092,7 +1060,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_chs_gods",
             ["event_name"] = "CharacterPostBattleSlaughter",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                     if context:character():faction():name() == faction_name then
                         local slaughter_count = cm:get_saved_value("wh_main_ritual_chs_gods_count");
                         if slaughter_count == nil then slaughter_count = 0 end
@@ -1113,7 +1083,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_chs_storms",
 			["event_name"] = "MilitaryForceBuildingCompleteEvent",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					return context:building() == "wh_main_horde_chaos_magic_2" and context:character():faction():is_human();
 					--return false;
 				end
@@ -1126,7 +1098,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_chs_tides",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
@@ -1141,7 +1115,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_chs_cults",
 			["event_name"] = "CharacterRazedSettlement",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 						
 				local raze_count = cm:get_saved_value("wh_main_ritual_chs_cults_count");
 					if raze_count == nil then raze_count = 0 end
@@ -1167,7 +1143,11 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_brt_peasants",
             ["event_name"] = "BuildingCompleted",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+				local building = context:building()
+				--# assume building: CA_BUILDING
                     if building:faction():name() == faction_name and building:name() == "wh_main_brt_farm_3" then
                         local buillding_count = cm:get_saved_value("wh_main_ritual_brt_peasants_count");
                         if buillding_count == nil then buillding_count = 0 end
@@ -1186,7 +1166,11 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_brt_peasants",
             ["event_name"] = "GarrisonOccupiedEvent",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+				local region = context:region()
+				--# assume region: CA_REGION
                     if context:character():faction():name() == faction_name and region:building_exists("wh_main_brt_farm_3") then
                         local buillding_count = cm:get_saved_value("wh_main_ritual_brt_peasants_count");
                         if buillding_count == nil then buillding_count = 0 end
@@ -1207,7 +1191,9 @@ function vandy_rite_unlock_listeners()
             ["rite_name"] = "wh_main_ritual_brt_errantry",
             ["event_name"] = "CharacterCompletedBattle",
             ["condition"] =
-                function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
                         return context:character():faction():name() == faction_name and not (context:character():region():owning_faction():subculture() == "wh_main_sc_brt_bretonnia" or context:character():region():owning_faction() == cm:get_faction("wh_main_vmp_mousillon"));
                 end;
         },	
@@ -1220,7 +1206,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_brt_blessing",
 			["event_name"] = "BuildingCompleted",
 			["condition"] =
-				function(context, faction_name)
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
 					local building = context:building();
 					
 					return building:faction():name() == faction_name and building:name() == "wh_main_brt_worship_3";
@@ -1232,7 +1220,9 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_brt_blessing",
 			["event_name"] = "GarrisonOccupiedEvent",
 			["condition"] =
-				function(context, faction_name)
+				function(context --: WHATEVER
+					,faction_name --: string 	
+				)
 					local region = context:garrison_residence():region();
 					
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_brt_worship_3");
@@ -1246,14 +1236,16 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_brt_invaders",
 			["event_name"] = "CharacterRankUp",
 			["condition"] =
-				function(context, faction_name)
+				function(context --: WHATEVER 	
+					, faction_name --: string 	
+				)
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
 				end
 		}		
 	
-	};
+	}--:vector<{subculture: string, rite_name: string, event_name: string, condition: function(context: WHATEVER, faction_name: string) --> boolean, faction_name: string?}>
 	
 	local human_factions = cm:get_human_factions();
 	
@@ -1261,6 +1253,7 @@ function vandy_rite_unlock_listeners()
 		for j = 1, #rite_templates do
 			local current_rite_template = rite_templates[j];
 			if cm:get_faction(human_factions[i]):subculture() == current_rite_template.subculture then
+				--# assume rite_unlock: RITE_UNLOCK
 				local rite = rite_unlock:new(
 					current_rite_template.rite_name,
 					current_rite_template.event_name,
@@ -1279,3 +1272,167 @@ function vandy_rite_unlock_listeners()
 		end;
 	end;
 end;
+
+
+
+
+core:add_listener(
+    "OWR_Dilemma_Listener",
+    "RitualCompletedEvent",
+    function(context)
+        return context:ritual():ritual_category() == "STANDARD_RITUAL";
+    end,
+    function(context)
+        local ritual = context:ritual();
+        local ritual_key = ritual:ritual_key();
+        local faction = context:performing_faction();
+        local faction_name = faction:name();
+        local index = cm:random_number(#vandy_effects_list_wh_main_ritual_chs_gods);
+        local waaaagh = cm:random_number(#vandy_effects_list_wh_main_ritual_grn_gorknmork);
+        if ritual_key == "wh_main_ritual_chs_gods" then
+            if faction:is_human() then 
+                cm:trigger_dilemma(faction_name, "wh_main_ritual_chs_gods", true);
+            else 
+                cm:apply_effect_bundle(vandy_effects_list_wh_main_ritual_chs_gods[index], faction_name, 10);
+            end
+        elseif ritual_key == "wh_main_ritual_grn_gorknmork" then
+            if faction:is_human() then
+                cm:trigger_dilemma(faction_name, "wh_main_ritual_grn_gorknmork", true);
+            else
+                cm:apply_effect_bundle(vandy_effects_list_wh_main_ritual_grn_gorknmork[waaaagh], faction_name, 5);
+            end
+        end
+    end,
+    true);
+	
+--Dwarf Holds movement script	
+	
+core:add_listener(
+    "OWR_Holds_Movement",
+    "RitualCompletedEvent",
+    function(context)
+        return context:ritual():ritual_category() == "STANDARD_RITUAL";
+    end,
+    function(context)
+        local ritual = context:ritual();
+        local ritual_key = ritual:ritual_key();
+        local faction = context:performing_faction();
+        local faction_name = faction:name();
+		OWR_LOG("OWR: "..tostring(faction_name).." preformed "..tostring(ritual_key).." rite");
+        if ritual_key == "wh_main_ritual_dwf_holds" then
+            dwf_holds_listeners(faction)
+        end
+    end,
+    true);
+	
+core:add_listener(
+		"IntrigueRiteListener",
+		"RitualCompletedEvent",
+		function(context)
+			return context:ritual():ritual_category() == "STANDARD_RITUAL";
+		end,
+		function(context)
+			local ritual = context:ritual();
+			local ritual_key = ritual:ritual_key();
+			local faction = context:performing_faction();
+			local factions_trading_with = faction:factions_trading_with();
+			OWR_LOG("TP: Standard ritual completed. Checking for Intrigue rite");
+			
+			if ritual_key == "wh_main_ritual_vmp_intrigue" then
+			OWR_LOG("TP: Intrigue Rite detected");
+			
+				if factions_trading_with:num_items() > 0 then
+				OWR_LOG("TP: Rite 'owner' has trading partners");
+				
+					for i = 0, factions_trading_with:num_items() - 1 do
+						local current_faction = factions_trading_with:item_at(i);
+						
+						apply_effect_to_regions(current_faction:name(),"tp_trade_corr_bundle_region_vamp")
+						OWR_LOG("TP: Effect being added.");
+					end;
+				end;
+			end;
+		end,
+		true
+	);	
+	
+core:add_listener(
+	"cultists",
+	"RitualCompletedEvent",
+	function(context)
+		return context:ritual():ritual_category() == "STANDARD_RITUAL";
+	end,
+	function(context)
+		local ritual = context:ritual();
+		local ritual_key = ritual:ritual_key();
+		local faction = context:performing_faction();
+		
+		if ritual_key == "wh_main_ritual_chs_cults" then
+			df_spawn_cultists(faction:name());
+		end;
+	end,
+	true);
+	
+core:add_listener(
+	"empdilemmas",
+	"RitualCompletedEvent",
+	function(context)
+		return context:ritual():ritual_category() == "STANDARD_RITUAL";
+	end,
+	function(context)
+		local ritual = context:ritual();
+		local ritual_key = ritual:ritual_key();
+		local faction = context:performing_faction();
+		
+		if ritual_key == "wh_main_ritual_emp_policy" then
+			OWR_emp_policy(faction)
+		end;
+	end,
+	true);
+	
+core:add_listener(
+	"chs_cult_corruption",
+	"RitualCompletedEvent",
+	function(context)
+		return context:ritual():ritual_category() == "STANDARD_RITUAL";
+	end,
+	function(context)
+		local ritual = context:ritual();
+		local ritual_key = ritual:ritual_key();
+		local faction = context:performing_faction();
+		
+		if ritual_key == "wh_main_ritual_chs_cults" then
+			OWR_chs_cults()
+		end;
+	end,
+	true);
+		
+	
+	
+	
+	
+end;
+
+
+
+
+
+
+
+
+
+
+
+
+
+function wec_rites()
+
+	cm:set_saved_value("vandy_rites", true);
+	out("OWR SCRIPT IS RUNNING");
+	
+	vandy_rite_unlock_listeners();
+	vandy_scripted_effects();
+	
+	OWR_LOG("OWR INIT COMPLETE");
+	end;
+	

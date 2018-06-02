@@ -21,7 +21,8 @@ isLogAllowed = true --:boolean
 
 --v function(text: string)
 function LLRLOG(text)
-    ftext = "LLR" --sometimes I use ftext as an arg of this function, but for simple mods like this one I don't need it.
+    ftext = "LLR" --:string
+    --sometimes I use ftext as an arg of this function, but for simple mods like this one I don't need it.
 
     if not isLogAllowed then
       return; --if our bool isn't set true, we don't want to spam the end user with logs. 
@@ -30,7 +31,7 @@ function LLRLOG(text)
   local logText = tostring(text)
   local logContext = tostring(ftext)
   local logTimeStamp = os.date("%d, %m %Y %X")
-  local popLog = io.open("WEC_LLR.txt","a")
+  local popLog = io.open("WEC_LOG.txt","a")
   --# assume logTimeStamp: string
   popLog :write("WEC:  "..logText .. "    : [" .. logContext .. "] : [".. logTimeStamp .. "]\n")
   popLog :flush()

@@ -131,6 +131,19 @@
 --#     make_faction_leader: boolean,
 --#     success_callback: function(CA_CQI)
 --# )
+--# assume CM.create_force: method(
+--#     faction_key: string,
+--#     unitstring: string,
+--#     region_key: string,
+--#     xPos: number,
+--#     yPos: number,
+--#     un1: boolean,
+--#     un2: boolean,
+--#     callback: (function(CA_CQI))?
+--# )
+
+
+
 --# assume CM.force_add_trait: method(character_cqi: CA_CQI, trait_key: string, showMessage: boolean)
 --# assume CM.force_add_trait_on_selected_character: method(trait_key: string)
 --# assume CM.disable_event_feed_events: method(disable: boolean, categories: string, subcategories: string, events: string)
@@ -157,9 +170,13 @@
 --# assume CM.random_number: method(num: int) --> int
 --# assume CM.apply_effect_bundle: method(bundle: string, faction: string, timer: int)
 --# assume CM.remove_effect_bundle: method(bundle: string, faction: string)
---# assume CM.add_default_diplomacy_record: method(faction: string, other_faction: string, record: string, offer: boolean, accept: boolean, enable_payments: boolean)
+
 --# assume CM.force_make_peace: method(faction: string, other_faction: string)
 --# assume CM.force_declare_war: method(declarer: string, declaree: string, attacker_allies: boolean, defender_allies: boolean)
+--# assume CM.force_make_vassal: method(vassaliser: string, vassal: string)
+--# assume CM.faction_has_trade_agreement_with_faction: method( first_faction: CA_FACTION, second_faction: CA_FACTION)
+--# assume CM.faction_has_nap_with_faction: method(first_faction: CA_FACTION, second_faction: CA_FACTION)
+
 --# assume CM.pending_battle_cache_get_defender: method(pos: int) --> (CA_CQI, CA_CQI, string)
 --# assume CM.pending_battle_cache_get_attacker: method(pos: int) --> (CA_CQI, CA_CQI, string)
 --# assume CM.force_change_cai_faction_personality: method(key: string, personality: string)
@@ -174,8 +191,12 @@
 --# assume CM.get_character_by_mf_cqi: method(cqi: CA_CQI) --> CA_CHAR
 --# assume CM.char_lookup_str: method(char: CA_CQI | CA_CHAR | number) --> string
 --# assume CM.kill_all_armies_for_faction: method(factionName: string)
+--# assume CM.get_highest_ranked_general_for_faction: method(faction_key: string) --> CA_CHAR
 --# assume CM.force_add_and_equip_ancillary: method(lookup: string, ancillary: string)
+--# assume CM.trigger_dilemma: method(faction_key: string, dilemma_key: string, trigger_immediately: boolean)
+--# assume CM.force_diplomacy:  method(faction: string, other_faction: string, record: string, offer: boolean, accept: boolean, enable_payments: boolean)
 
+--# assume CM.set_ritual_unlocked: method(cqi: CA_CQI, rite_key: string, unlock: boolean)
 
 -- CAMPAIGN UI MANAGER
 --# assume CUIM.get_char_selected: method() --> string
@@ -198,6 +219,7 @@
 --# assume CA_CHAR.get_forename: method() --> string
 --# assume CA_CHAR.command_queue_index: method() --> CA_CQI
 --# assume CA_CHAR.rank: method() --> int
+--# assume CA_CHAR.won_battle: method() --> boolean
 -- CHARACTER LIST
 --# assume CA_CHAR_LIST.num_items: method() --> number
 --# assume CA_CHAR_LIST.item_at: method(index: number) --> CA_CHAR
@@ -232,6 +254,8 @@
 --# assume CA_REGION.is_abandoned: method() --> boolean
 --# assume CA_REGION.owning_faction: method() --> CA_FACTION
 --# assume CA_REGION.slot_list: method() --> CA_SLOT_LIST
+--# assume CA_REGION.is_province_capital: method() --> boolean
+--# assume CA_REGION.building_exists: method(building: string) --> boolean
 
 -- SETTLEMENT
 --# assume CA_SETTLEMENT.logical_position_x: method() --> number
@@ -280,10 +304,12 @@
 --# assume CA_FACTION.is_dead: method() --> boolean
 --# assume CA_FACTION.is_vassal_of: method(faction: string) --> boolean
 --# assume CA_FACTION.is_ally_vassal_or_client_state_of: method(faction: string) --> boolean
---# assume CA_FACTION.at_war_with: method(faction: string) --> boolean
+--# assume CA_FACTION.at_war_with: method(faction: CA_FACTION) --> boolean
 --# assume CA_FACTION.region_list: method() --> CA_REGION_LIST
 --# assume CA_FACTION.has_effect_bundle: method(bundle:string) --> boolean
 --# assume CA_FACTION.home_region: method() --> CA_REGION
+--# assume CA_FACTION.command_queue_index: method() --> CA_CQI
+
 
 -- FACTION LIST
 --# assume CA_FACTION_LIST.num_items: method() --> number
@@ -291,7 +317,7 @@
 
 --REGION LIST
 --# assume CA_REGION_LIST.num_items: method() --> number
---# assume CA_REGION_LIST.item_at: method() --> CA_REGION
+--# assume CA_REGION_LIST.item_at: method(i: number) --> CA_REGION
 
 -- EFFECT
 --# assume CA_EFFECT.get_localised_string: function(key: string) --> string
@@ -300,6 +326,7 @@
 -- PENDING BATTLE
 --# assume CA_PENDING_BATTLE.attacker: method() --> CA_CHAR
 --# assume CA_PENDING_BATTLE.defender: method() --> CA_CHAR
+--# assume CA_PENDING_BATTLE.ambush_battle: method() --> boolean
 
 
 -- CORE
@@ -347,3 +374,9 @@
 --# assume global q_setup: function()
 --# assume global set_up_rank_up_listener: function(quest_table: vector<vector<string | number>>, subtype: string, infotext: vector<string | number>)
 
+-- RITES UNLOCK OBJECT
+
+--# assume global class RITE_UNLOCK
+
+--# assume RITE_UNLOCK.new: method(rite_key: string, event_name: string, condition: function(context: WHATEVER, faction_name: string)--> boolean, faction: string?) --> RITE_UNLOCK
+--# assume RITE_UNLOCK.start: method(human_faction_name: string)
