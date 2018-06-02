@@ -2,13 +2,15 @@
 --last update 6/2/2018
 
 
-isLogAllowed = true 
+OWR_LOG_ALLOWED = true 
+
+
 
 
 
 
 function WEC_REFRESH_LOG()
-    if not isLogAllowed then
+    if not OWR_LOG_ALLOWED then
         return;
     end
     
@@ -22,45 +24,25 @@ function WEC_REFRESH_LOG()
 end
 
 --v function(text: string)
-function OWR_LOG(text)
-	ftext = "OWR"
-    if not isLogAllowed then
-      return;
+function OWRLOG(text)
+    ftext = "OWR" 
+    --sometimes I use ftext as an arg of this function, but for simple mods like this one I don't need it.
+
+    if not OWR_LOG_ALLOWED then
+      return; --if our bool isn't set true, we don't want to spam the end user with logs. 
     end
 
   local logText = tostring(text)
   local logContext = tostring(ftext)
   local logTimeStamp = os.date("%d, %m %Y %X")
-  local popLog = io.open("sfo_log.txt","a")
+  local popLog = io.open("WEC_LOG.txt","a")
   --# assume logTimeStamp: string
   popLog :write("WEC:  "..logText .. "    : [" .. logContext .. "] : [".. logTimeStamp .. "]\n")
   popLog :flush()
   popLog :close()
 end
 
-WEC_REFRESH_LOG()
 
-
-function vandy_scripted_effects()
-
---Special scripted rite effects!
-
-OWR_LOG("OWR: setting up scripted effect listeners");
-
-vandy_effects_list_wh_main_ritual_chs_gods = {
-"wh_main_ritual_chs_gods_slaanesh",
-"wh_main_ritual_chs_gods_tzeentch",
-"wh_main_ritual_chs_gods_khorne",
-"wh_main_ritual_chs_gods_nurgle"
-} --: vector<string>
-
-vandy_effects_list_wh_main_ritual_grn_gorknmork = {
-"wh_main_ritual_grn_gorknmork_gork",
-"wh_main_ritual_grn_gorknmork_mork"
-} --: vector<string>
-
-
---Dilemma for Gork n' Mork & Chaos Gods
 
 
 ---Overwritin' here instead of there, gotta add them peasants!
@@ -173,22 +155,22 @@ end;
 --v function(faction_name: string)
 function df_spawn_cultists(faction_name)
 
-OWR_LOG("OWR: spawning cultists")
+OWRLOG("OWR: spawning cultists")
 
 local army = cm:get_highest_ranked_general_for_faction(faction_name);
-OWR_LOG("1")
+OWRLOG("1")
 local spawnx = army:logical_position_x() + 3;
-OWR_LOG("2")
+OWRLOG("2")
 local spawny = army:logical_position_y() - 3;
-OWR_LOG("3")
+OWRLOG("3")
 local spawnregion = "wh_main_goromandy_mountains_baersonlings_camp"
-OWR_LOG("4")
+OWRLOG("4")
 local unit_list = "wh_dlc01_chs_inf_forsaken_0,wh_dlc01_chs_inf_forsaken_0,wh_main_chs_inf_chosen_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_marauders_0,wh_main_chs_inf_chaos_warriors_1,wh_main_chs_inf_chaos_warriors_1,wh_main_chs_inf_chaos_warriors_1,wh_main_chs_mon_chaos_spawn,wh_main_chs_mon_chaos_spawn,wh_main_chs_mon_chaos_warhounds_0"
-OWR_LOG("5")
+OWRLOG("5")
 local turn = cm:model():turn_number();
 
 
-OWR_LOG("spawning army");
+OWRLOG("spawning army");
 	cm:create_force(
 	"wh2_main_chs_chaos_incursion_def",
 	unit_list,
@@ -244,14 +226,14 @@ function apply_effect_to_regions(faction, effect_bundle)
 	local effectBundle = effect_bundle
 	local thisFaction = cm:model():world():faction_by_key(faction);
 	local regionList = thisFaction:region_list();
-	OWR_LOG("TP: effect function called");
+	OWRLOG("TP: effect function called");
 	
 	for i = 0, regionList:num_items() - 1 do
 		local current_region = regionList:item_at(i);
-		OWR_LOG("TP: checking regions with trade");
+		OWRLOG("TP: checking regions with trade");
 			
 		if current_region:is_province_capital() then
-			OWR_LOG("TP: applying bundle to capital.");
+			OWRLOG("TP: applying bundle to capital.");
 			cm:remove_effect_bundle_from_region(effectBundle, current_region:name());
 			cm:apply_effect_bundle_to_region(effectBundle, current_region:name(), 10);
 		end;
@@ -267,7 +249,7 @@ end;
 
 --v function(faction: CA_FACTION)
 function dwf_holds_listeners(faction)
-OWR_LOG("began dwarf hold for "..tostring(faction:name()).." applying the effect bundles");
+OWRLOG("began dwarf hold for "..tostring(faction:name()).." applying the effect bundles");
 local current_faction = cm:get_faction((faction:name()));
 local region_list = current_faction:region_list();
 
@@ -275,7 +257,7 @@ local region_list = current_faction:region_list();
 for i = 0, region_list:num_items() - 1 do
 	local current_region = region_list:item_at(i);
 	local current_region_name = current_region:name();
-	OWR_LOG("applying to "..tostring(current_region_name).." for dwf_holds");		
+	OWRLOG("applying to "..tostring(current_region_name).." for dwf_holds");		
 	cm:apply_effect_bundle_to_region("wh_main_ritual_dwf_holds_movement", current_region_name, 5);
 	
 end
@@ -328,8 +310,11 @@ end;
 
 
 --this function uses CA's rite condition loading function to load custom conditions for OWR.
-function vandy_rite_unlock_listeners()
+function owr_rite_unlock_listeners()
+	out("test1");
 	
+	OWRLOG("Starting Rite Unlocks");
+	out("test2");
 	local rite_templates = {
 
 		--BEASTMEN--
@@ -340,8 +325,8 @@ function vandy_rite_unlock_listeners()
 			["rite_name"] = "wh_main_ritual_bst_vicious_shadows",
 			["event_name"] = "CharacterCompletedBattle",
 			["condition"] =
-			function(context --: WHATEVER
-				,faction_name --: string 	
+			function(context, --: WHATEVER
+			faction_name --: string 	
 			)
 					local character = context:character();
 					local pb = context:pending_battle();
@@ -1254,6 +1239,7 @@ function vandy_rite_unlock_listeners()
 			local current_rite_template = rite_templates[j];
 			if cm:get_faction(human_factions[i]):subculture() == current_rite_template.subculture then
 				--# assume rite_unlock: RITE_UNLOCK
+				OWRLOG("Adding Rite Unlock Condition for ["..human_factions[i].."] with rite key ["..current_rite_template.rite_name.."] and event name ["..current_rite_template.event_name.."] ")
 				local rite = rite_unlock:new(
 					current_rite_template.rite_name,
 					current_rite_template.event_name,
@@ -1271,9 +1257,30 @@ function vandy_rite_unlock_listeners()
 			end;
 		end;
 	end;
+
+
 end;
 
+function vandy_scripted_effects()
 
+	--Special scripted rite effects!
+	
+	OWRLOG("OWR: setting up scripted effect listeners");
+	
+	vandy_effects_list_wh_main_ritual_chs_gods = {
+	"wh_main_ritual_chs_gods_slaanesh",
+	"wh_main_ritual_chs_gods_tzeentch",
+	"wh_main_ritual_chs_gods_khorne",
+	"wh_main_ritual_chs_gods_nurgle"
+	} --: vector<string>
+	
+	vandy_effects_list_wh_main_ritual_grn_gorknmork = {
+	"wh_main_ritual_grn_gorknmork_gork",
+	"wh_main_ritual_grn_gorknmork_mork"
+	} --: vector<string>
+	
+	
+	--Dilemma for Gork n' Mork & Chaos Gods
 
 
 core:add_listener(
@@ -1318,7 +1325,7 @@ core:add_listener(
         local ritual_key = ritual:ritual_key();
         local faction = context:performing_faction();
         local faction_name = faction:name();
-		OWR_LOG("OWR: "..tostring(faction_name).." preformed "..tostring(ritual_key).." rite");
+		OWRLOG("OWR: "..tostring(faction_name).." preformed "..tostring(ritual_key).." rite");
         if ritual_key == "wh_main_ritual_dwf_holds" then
             dwf_holds_listeners(faction)
         end
@@ -1336,19 +1343,19 @@ core:add_listener(
 			local ritual_key = ritual:ritual_key();
 			local faction = context:performing_faction();
 			local factions_trading_with = faction:factions_trading_with();
-			OWR_LOG("TP: Standard ritual completed. Checking for Intrigue rite");
+			OWRLOG("TP: Standard ritual completed. Checking for Intrigue rite");
 			
 			if ritual_key == "wh_main_ritual_vmp_intrigue" then
-			OWR_LOG("TP: Intrigue Rite detected");
+			OWRLOG("TP: Intrigue Rite detected");
 			
 				if factions_trading_with:num_items() > 0 then
-				OWR_LOG("TP: Rite 'owner' has trading partners");
+				OWRLOG("TP: Rite 'owner' has trading partners");
 				
 					for i = 0, factions_trading_with:num_items() - 1 do
 						local current_faction = factions_trading_with:item_at(i);
 						
 						apply_effect_to_regions(current_faction:name(),"tp_trade_corr_bundle_region_vamp")
-						OWR_LOG("TP: Effect being added.");
+						OWRLOG("TP: Effect being added.");
 					end;
 				end;
 			end;
@@ -1424,15 +1431,14 @@ end;
 
 
 
-
 function wec_rites()
 
 	cm:set_saved_value("vandy_rites", true);
 	out("OWR SCRIPT IS RUNNING");
 	
-	vandy_rite_unlock_listeners();
+	owr_rite_unlock_listeners();
 	vandy_scripted_effects();
 	
-	OWR_LOG("OWR INIT COMPLETE");
+	OWRLOG("OWR INIT COMPLETE");
 	end;
 	
