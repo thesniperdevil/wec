@@ -189,8 +189,17 @@ end
 
 --v function(self: CIP, character: {subtype: string, forename: string, surname: string?})
 function chaos_invasion_point.set_leader_character(self, character)
+	CILOG("Adding leader character for the invasion point at stage ["..tostring(self.stage).."] and channel ["..self.channel.."]", "chaos_invasion_point.set_leader_exp_override(self, exp)")
 	self.has_leader_character = true
 	self.leader_character = character
 end
 
+--v function(self: CIP) --> boolean
+function chaos_invasion_point.has_leader(self)
+	return self.has_leader_character
+end
 
+--v function(self: CIP) --> boolean
+function chaos_invasion_point.has_leader_army(self)
+	return self.override_leader_army
+end
