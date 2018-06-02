@@ -286,6 +286,7 @@
 --# assume CA_MODEL.difficulty_level: method() --> number
 --# assume CA_MODEL.turn_number: method() --> number
 --# assume CA_MODEL.pending_battle: method() --> CA_PENDING_BATTLE
+--# assume CA_MODEL.combined_difficulty_level: method() --> int
 
 
 -- WORLD
