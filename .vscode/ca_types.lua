@@ -105,6 +105,7 @@
 --# assume CM.model: method() --> CA_MODEL
 --# assume CM.is_multiplayer: method() --> boolean
 --# assume CM.get_local_faction: method(force: boolean?) --> string
+--# assume CM.whose_turn_is_it: method() --> string
 --# assume CM.get_human_factions: method() --> vector<string>
 --# assume CM.get_campaign_ui_manager: method() --> CUIM
 --# assume CM.callback: method(
