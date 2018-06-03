@@ -49,7 +49,7 @@ end
 --v [NO_CHECK] function(faction: CA_FACTION)
 function Calculate_Economy_Penalty(faction)
     if Is_Bretonnian(faction:name()) and faction:is_human() then
-        out_P("---- Calculate_Economy_Penalty ----");
+        OWRLOG("---- Calculate_Economy_Penalty ----");
         local peasant_count = 0;
         local force_list = faction:military_force_list();
         local region_count = faction:region_list():num_items();
@@ -66,7 +66,7 @@ function Calculate_Economy_Penalty(faction)
                     local key = unit:unit_key();
                     local val = Bretonnia_Peasant_Units[key] or 0;
                     
-                    out_P("\t"..key.." - "..val);
+                    OWRLOG("\t"..key.." - "..val);
                     peasant_count = peasant_count + val;
                 end
             end
@@ -78,7 +78,7 @@ function Calculate_Economy_Penalty(faction)
             end
         end
         
-        out_P("\tPeasants: "..peasant_count);
+        OWRLOG("\tPeasants: "..peasant_count);
         Remove_Economy_Penalty(faction);
         
     
@@ -114,17 +114,17 @@ function Calculate_Economy_Penalty(faction)
         
         local free_peasants = (region_count * peasants_per_region_fac) + peasants_base_amount_fac;
         free_peasants = math.max(1, free_peasants);
-        out_P("Free Peasants: "..free_peasants);
+        OWRLOG("Free Peasants: "..free_peasants);
         local peasant_percent = (peasant_count / free_peasants) * 100;
-        out_P("Peasant Percent: "..peasant_percent.."%");
+        OWRLOG("Peasant Percent: "..peasant_percent.."%");
         peasant_percent = RoundUp(peasant_percent);
-        out_P("Peasant Percent Rounded: "..peasant_percent.."%");
+        OWRLOG("Peasant Percent Rounded: "..peasant_percent.."%");
         peasant_percent = math.min(peasant_percent, 200);
-        out_P("Peasant Percent Clamped: "..peasant_percent.."%");
+        OWRLOG("Peasant Percent Clamped: "..peasant_percent.."%");
         
         if peasant_percent > 100 then
             peasant_percent = peasant_percent - 100;
-            out_P("Peasant Percent Final: "..peasant_percent);
+            OWRLOG("Peasant Percent Final: "..peasant_percent);
             cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX..peasant_percent, faction:name(), 0);
             
             if cm:get_saved_value("ScriptEventNegativePeasantEconomy") ~= true and faction:is_human() then
@@ -140,7 +140,7 @@ function Calculate_Economy_Penalty(faction)
             
             PEASANTS_RATIO_POSITIVE = false;
         else
-            out_P("Peasant Percent Final: 0");
+            OWRLOG("Peasant Percent Final: 0");
             cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX.."0", faction:name(), 0);
             
             if cm:get_saved_value("ScriptEventNegativePeasantEconomy") == true and cm:get_saved_value("ScriptEventPositivePeasantEconomy") ~= true and faction:is_human() then
@@ -239,6 +239,7 @@ function apply_effect_to_regions(faction, effect_bundle)
 		end;
 	end;
 end;
+
 
 
 
