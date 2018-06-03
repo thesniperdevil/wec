@@ -81,9 +81,6 @@ function WEC_ERROR(msg)
 end;
 
 
-
-
-
 --v function(subtype: string, forename: string, surname: string, originating_faction: string) --> LLR_LORD
 function llr_lord.new(subtype, forename, surname, originating_faction)
 
@@ -126,6 +123,7 @@ function llr_lord.new(subtype, forename, surname, originating_faction)
     self.quest_ancilaries = {} --:vector<string>
     self.has_immortal_trait_set = false --: boolean
     self.immortal_trait = nil --:string
+    self.no_check = false --: boolean
     --quests won't re-trigger if the AI has already completed them, so we're going to have to reset them manually.
 
 
@@ -151,6 +149,10 @@ function llr_lord.is_lord_involved(self, faction)
     return faction == self.faction
 end
 
+--v function(self: LLR_LORD)
+function llr_lord.force(self)
+    self.no_check = true
+end
 
 --another simple one, this time ill take the space to go over what the Kailua function notation means
 --the below translates to a function of the object the function is being applied to must be applied to an object of class LLR_LORD and returns a boolean value.
@@ -167,6 +169,10 @@ function llr_lord.has_immortal_trait(self)
     return self.has_immortal_trait_set
 end
 
+--v function(self: LLR_LORD) --> boolean
+function llr_lord.forced(self)
+    return self.no_check
+end
 
 --this method is a mutator, or a setter. 
 --it adds data to the model
@@ -486,14 +492,27 @@ function llr_manager.new()
     --finally, we have to initialise our storage table for the lord objects themselves. They go in here!
     self.lords = {} --:map<string, vector<LLR_LORD>>
 
-    --once again, return our object.
     return self
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 --unlike the other methods we've looked at, which were basically functional or accessors, this one is a "mutator", or a "setter"
 --it adds or edits information in the model.
 --v function(self: LLR_MANAGER, lord: LLR_LORD)
 function llr_manager.add_lord(self, lord) 
+    --error checking
     if not tostring(self) == "llr_manager" then
         WEC_ERROR("method #llr_manager.add_lord(self, lord)# called but is not being applied to a correct object!")
         return
@@ -503,21 +522,42 @@ function llr_manager.add_lord(self, lord)
     end
 
 
-    LLRLOG("Adding a lord to manager!");
+    
     --first of all, we want to get the faction associated with the lord object we've been given. 
     local faction = lord:get_faction()
+
+    --next, we want to prevent duplicate custom lords being added.
+    LLRLOG("Adding a lord to manager! Lord forced ["..tostring(lord:forced()).."]; New faction ["..tostring(self.lords[faction] == nil).."] ");
+    if tostring(lord:forced()) == "false" and tostring(self.lords[faction] == nil) == "false" then
+        LLRLOG("Checking this lord!")
+        for i = 1, #self.lords[faction] do
+            local cl = self.lords[faction][i]
+            if lord.subtype == cl.subtype and lord.forename == cl.forename then
+                LLRLOG("Lord with subtype ["..lord.subtype.."] was being added to the model but is a duplicate!")
+                return
+            end
+        end
+    end
+        
+
+
     --if we haven't stored any lords for this faction yet, then the index for them isn't going to be initialised.
     --trying to table.insert into soemthing that isn't yet a table would crash the script, not good!
     if self.lords[faction] == nil then
          self.lords[faction] = {} 
-    end
+    end --this will handle that problem.
 
-    --this will handle that problem.
-        local t = self.lords[faction] --get a handle on the index of lords for that faction
-        table.insert(t, lord) --insert our new lord
-        self.factions[faction] = true --tell the script to check for this faction when listening for confederations. 
-        --we can do the above multiple times because as long as it is true, it works.
+    
+
+
+  
+   
+    local t = self.lords[faction] --get a handle on the index of lords for that faction
+    table.insert(t, lord) --insert our new lord
+    self.factions[faction] = true --tell the script to check for this faction when listening for confederations. 
+    --we can do the above multiple times because as long as it is true, it works.
 end
+
 
 --v function(self: LLR_MANAGER, subtype: string, faction: string) --> LLR_LORD
 function llr_manager.find_lord_with_subtype(self, subtype, faction)
@@ -553,6 +593,10 @@ function llr_manager.find_lord_with_subtype(self, subtype, faction)
         return nil
     end
 end
+    
+
+
+
 
 --v function(self: LLR_MANAGER, subtype: string, faction: string)
 function llr_manager.remove_lord(self, subtype, faction)
@@ -630,6 +674,8 @@ function llr_manager.activate(self)
         true); --we want this listener to trigger as many times as necessary.
 
 end
+
+
 
 --for other mods to use these functions, we need to add them to the game space, making them public.
 _G.llr_manager = llr_manager; 
@@ -870,7 +916,7 @@ local vanilla_lords = {
     
 
 }--:vector<{faction: string, forename: string, surname: string, subtype: string, quests: vector<string>}>
-  
+
 for i = 1, #vanilla_lords do --start looping through the information we just defined.
   local clord = vanilla_lords[i] --makes the rest shorter and easier to type.
   local fact = clord.faction 
@@ -882,12 +928,11 @@ for i = 1, #vanilla_lords do --start looping through the information we just def
   if clord.quests then
     lord:add_quest(clord.quests)
   end
+  lord:force()
   llr:add_lord(lord) --add the new lord to our model.
 end
     LLRLOG("Triggering the Vanilla Lords Added Event")
     core:trigger_event("LegendaryLordVanillaLordsAdded")
-
-
 
 end
 
