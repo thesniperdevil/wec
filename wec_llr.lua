@@ -273,100 +273,189 @@ function llr_lord.respec_char_with_army(self, faction, character)
         return
     end
 
-        if character:character_subtype(self.subtype) and character:get_forename() == self.forename then --if the forename and subtype match, we've found him.
-            LLRLOG("Checkpoint 2: Found our desired character.")
-            --first, we need to store the army list.
-            self.army_list = {} --:vector<string>
-            --first we define an empty table to store it in.
-            --notice we use j in this loop because i is already taken.
-            for j = 0, character:military_force():unit_list():num_items() - 1 do
-                local current_unit = character:military_force():unit_list():item_at(j):unit_key()
-                --now we get each unit object in the army and convert it into it's unit key string.
-                table.insert(self.army_list, current_unit)
-                --finally, we add that string to the list we declared.
-            end
-            --there are problems with adding tons of units to an army, so we're going to have to assembly the string.
-            --first, we need a blank string to start adding stuff to.
-            self.spawn_string = ""
-            --the first "unit" in every army is the general himself. 
-            --so we're going to start this loop at #2 because otherwise we might end up with two lords!
-            for k = 2, #self.army_list do
-                --we define the next string as a variable.
-                --we insert the comma to conform to the unit_spawn_list_string format that CA uses.
-                next_string = self.spawn_string..","..self.army_list[k]
-                --now, we set the self.spawn_string to the string we assembled.
-                --we cannot do this directly in the way that you would increment a variable a = a + 1 because in lua strings are immutable.
-                self.spawn_string = next_string
-            end
-            LLRLOG("Assembled spawn string as ["..self.spawn_string.."] ")
+        
 
-            --now, get the exp level of the character
-            self.exp_level = character:rank() 
-            LLRLOG("noted the ranked of the lord as ["..tostring(self.exp_level).."] ")
-            --get the positioning of the army.
-            self.x = character:logical_position_x()
-            self.y = character:logical_position_y()
-            self.region = character:region():name()
-            --this one is actually risky, so we need to do a check!
-            --if the lord happens to be in the chaos wastes then the spawn command will fail.
-            --a quirk of the spawn command is that the spawn region has to have a settlement.
-            --as a backup, we make the spawn region the capital of the faction.
-            if cm:get_region(self.region):settlement():is_null_interface() then
-                self.region = cm:get_faction(faction):home_region():name()
-            end
-
-            LLRLOG("found positioning data as x = ["..tostring(self.x).."], y = ["..tostring(self.y).."], region = ["..self.region.."]")
-
-            LLRLOG("Killing the inherited lord!")
-            --we need to prevent the message from showing up in the event feed.
-            cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
-            --now, we need to strip immortality from the character
-            cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
-
-            if self:has_immortal_trait() == true then
-                cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), self.immortal_trait)
-            end
-
-            --finally, we kill him and his army.
-            cm:kill_character(character:command_queue_index(), true, true)
-            --turn message back on on a callback.
-            cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
-            --now, spawn the lord
-            --we do this on a callback for safety. 
-            cm:callback( function()
-                LLRLOG("spawning lord for respec!")
-                cm:create_force_with_general(
-                faction,
-                self.spawn_string,
-                self.region,
-                self.x,
-                self.y,
-                "general",
-                self.subtype,
-                self.forename,
-                "",
-                self.surname,
-                "",
-                false,
-                function(cqi) 
-                    LLRLOG("Levelling up the respec'd lord!")
-                    cm:set_character_immortality(cm:char_lookup_str(cqi), true);
-                    self:grant_quest_items(cqi)
-                    --this makes sure our shiny new lord is immortal.
-                    cm:add_agent_experience(cm:char_lookup_str(cqi), exp_to_levels_table[self.exp_level])
-                    --this references our exp table at the top of this function.
-
-                    
-                    LLRLOG("Levelling up the respec'd lord finished.")
-                end)
-            end,
-            0.1
-        );
-        --break otherwise the loop might find the character again and keep doing this infinitely.
-        return
+        --first, we need to store the army list.
+        self.army_list = {} --:vector<string>
+        --first we define an empty table to store it in.
+        --notice we use j in this loop because i is already taken.
+        for j = 0, character:military_force():unit_list():num_items() - 1 do
+            local current_unit = character:military_force():unit_list():item_at(j):unit_key()
+            --now we get each unit object in the army and convert it into it's unit key string.
+            table.insert(self.army_list, current_unit)
+            --finally, we add that string to the list we declared.
         end
-    WEC_ERROR("method: #llr_lord.respec_char_with_army(self, faction)# called but cannot find the lord to respec! Something went wrong.")
+        --there are problems with adding tons of units to an army, so we're going to have to assembly the string.
+        --first, we need a blank string to start adding stuff to.
+        self.spawn_string = ""
+        --the first "unit" in every army is the general himself. 
+        --so we're going to start this loop at #2 because otherwise we might end up with two lords!
+        for k = 2, #self.army_list do
+            --we define the next string as a variable.
+            --we insert the comma to conform to the unit_spawn_list_string format that CA uses.
+            next_string = self.spawn_string..","..self.army_list[k]
+            --now, we set the self.spawn_string to the string we assembled.
+            --we cannot do this directly in the way that you would increment a variable a = a + 1 because in lua strings are immutable.
+            self.spawn_string = next_string
+        end
+        LLRLOG("Assembled spawn string as ["..self.spawn_string.."] ")
+
+        --now, get the exp level of the character
+        self.exp_level = character:rank() 
+        LLRLOG("noted the ranked of the lord as ["..tostring(self.exp_level).."] ")
+        --get the positioning of the army.
+        self.x = character:logical_position_x()
+        self.y = character:logical_position_y()
+        self.region = character:region():name()
+        --this one is actually risky, so we need to do a check!
+        --if the lord happens to be in the chaos wastes then the spawn command will fail.
+        --a quirk of the spawn command is that the spawn region has to have a settlement.
+        --as a backup, we make the spawn region the capital of the faction.
+        if cm:get_region(self.region):settlement():is_null_interface() then
+            self.region = cm:get_faction(faction):home_region():name()
+        end
+
+        LLRLOG("found positioning data as x = ["..tostring(self.x).."], y = ["..tostring(self.y).."], region = ["..self.region.."]")
+
+        LLRLOG("Killing the inherited lord!")
+        --we need to prevent the message from showing up in the event feed.
+        cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
+        --now, we need to strip immortality from the character
+        cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
+
+        if self:has_immortal_trait() == true then
+            cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), self.immortal_trait)
+        end
+
+        --finally, we kill him and his army.
+        cm:kill_character(character:command_queue_index(), true, true)
+        --turn message back on on a callback.
+        cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
+        --now, spawn the lord
+        --we do this on a callback for safety. 
+        cm:callback( function()
+            LLRLOG("spawning lord for respec!")
+            cm:create_force_with_general(
+            faction,
+            self.spawn_string,
+            self.region,
+            self.x,
+            self.y,
+            "general",
+            self.subtype,
+            self.forename,
+            "",
+            self.surname,
+            "",
+            false,
+            function(cqi) 
+                LLRLOG("Levelling up the respec'd lord!")
+                cm:set_character_immortality(cm:char_lookup_str(cqi), true);
+                self:grant_quest_items(cqi)
+                --this makes sure our shiny new lord is immortal.
+                cm:add_agent_experience(cm:char_lookup_str(cqi), exp_to_levels_table[self.exp_level])
+                --this references our exp table at the top of this function.
+
+                
+                LLRLOG("Levelling up the respec'd lord finished.")
+            end)
+        end,
+        0.1
+    );
+
 end
+
+--v function(self: LLR_LORD, faction: string, character: CA_CHAR)
+function llr_lord.respec_wounded_lord(self, faction, character)
+    local exp_to_levels_table = {
+        0, 900,  1900,  3000, 4200,  5500,6870, 8370, 9940,
+      11510,13080,14660, 16240,17820,19400, 20990,22580,24170,25770,27370,28980,30590,32210,
+      33830,35460,37100,38740, 40390,42050,43710,45380,47060,48740,50430,52130, 53830, 55540,57260,58990,
+      60730, 60730, 60730, 60730,  60730, 60730, 60730, 60730, 60730,  60730, 60730, 60730,
+      60730 }--:vector<number>
+
+    --this long ass list is just a list of exp quantities to level.
+    --we add a bunch of extras on the end to compat with extra level mods. 
+
+    --first, we need to note some information about the old character.
+    self.exp_level = character:rank() 
+    --we are going to use the home settlement for our x and y. 
+    self.x = cm:get_faction(faction):home_region():settlement():logical_position_x() + 1;
+    self.y = cm:get_faction(faction):home_region():settlement():logical_position_y() - 1;
+    self.region = cm:get_faction(faction):home_region():name()
+    --now we need to kill the old, wounded lord.
+    --we need to prevent the message from showing up in the event feed.
+    cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
+    --now, we need to strip immortality from the character
+    cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
+
+    if self:has_immortal_trait() == true then
+        cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), self.immortal_trait)
+    end
+
+    --finally, we kill him.
+    cm:kill_character(character:command_queue_index(), false, true)
+    --turn message back on on a callback.
+    cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
+
+    local army_list = cm:get_faction(faction):military_force_list()
+    local army = army_list:item_at(0):unit_list()
+
+    self.army_list = {} 
+
+    for j = 0, army:num_items() - 1 do
+        local current_unit = army:item_at(j):unit_key()
+
+        table.insert(self.army_list, current_unit)
+
+    end
+
+    self.spawn_string = ""
+
+    for k = 2, #self.army_list do
+
+        next_string = self.spawn_string..","..self.army_list[k]
+
+        self.spawn_string = next_string
+    end
+    cm:create_force_with_general(
+        faction,
+        self.spawn_string,
+        self.region,
+        self.x,
+        self.y,
+        "general",
+        self.subtype,
+        self.forename,
+        "",
+        self.surname,
+        "",
+        false,
+        function(cqi) 
+            LLRLOG("Levelling up the respec'd lord!")
+            cm:set_character_immortality(cm:char_lookup_str(cqi), true);
+            self:grant_quest_items(cqi)
+            self.cqi = cqi
+            --this makes sure our shiny new lord is immortal.
+            cm:add_agent_experience(cm:char_lookup_str(cqi), exp_to_levels_table[self.exp_level])
+            --this references our exp table at the top of this function.
+            
+            --we want this lord to be wounded, however, he also has a random ass army
+            --[[
+
+            ]]--
+        end)
+        cm:callback(function()
+            LLRLOG(tostring(self.cqi))
+            cm:kill_character(self.cqi, true, true)
+        end, 2);
+end
+
+
+
+
+
+
 
 --we are creating another object now, this one to handle all those little objects we made. 
 --v function() --> LLR_MANAGER
@@ -529,6 +618,7 @@ function llr_manager.activate(self)
                             v[i]:respec_char_with_army(confederation_name, character) --we use the respec method we defined earlier.
                         else
                             LLRLOG("Char is wounded!")
+                            v[i]:respec_wounded_lord(confederation_name, character)
                         end
                     else --otherwise, if we can't find them on the map
                         v[i]:respawn_to_pool(confederation_name) -- we give them to our confederator.
