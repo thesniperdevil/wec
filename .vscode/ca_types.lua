@@ -103,7 +103,8 @@
 -- CAMPAIGN MANAGER
 --# assume CM.get_game_interface: method() --> CA_GAME
 --# assume CM.model: method() --> CA_MODEL
---# assume CM.get_local_faction: method() --> string
+--# assume CM.is_multiplayer: method() --> boolean
+--# assume CM.get_local_faction: method(force: boolean?) --> string
 --# assume CM.get_human_factions: method() --> vector<string>
 --# assume CM.get_campaign_ui_manager: method() --> CUIM
 --# assume CM.callback: method(
@@ -197,7 +198,7 @@
 --# assume CM.force_diplomacy:  method(faction: string, other_faction: string, record: string, offer: boolean, accept: boolean, enable_payments: boolean)
 
 --# assume CM.set_ritual_unlocked: method(cqi: CA_CQI, rite_key: string, unlock: boolean)
-
+--# assume CM.pooled_resource_mod: method(cqi: CA_CQI, pooled_resource: string, factor: string, quantity: number)
 -- CAMPAIGN UI MANAGER
 --# assume CUIM.get_char_selected: method() --> string
 --# assume CUIM.settlement_selected: string
@@ -355,6 +356,8 @@
 -- COMMON
 --# assume global find_uicomponent: function(parent: CA_UIC, string...) --> CA_UIC
 --# assume global UIComponent: function(pointer: CA_Component) --> CA_UIC
+--# assume global find_uicomponent_from_table: function(root: CA_UIC, findtable: vector<string>) --> CA_UIC
+--# assume global uicomponent_descended_from: function(root: CA_UIC, parent_name: string)
 --# assume global out: function(out: string | number)  
 --# assume global print_all_uicomponent_children: function(component: CA_UIC)
 --# assume global is_uicomponent: function(object: any) --> boolean

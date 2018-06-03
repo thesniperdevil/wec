@@ -66,9 +66,7 @@ function llr_lord.new(subtype, forename, surname, originating_faction)
 
 
 
-    --this one is a boolean that tells the script to nope the fuck out if it starts acting on a human player.
-    --this SHOULD never happen but if an error caused it to happen, we wouldn't want to ruin any saves.
-    self.safety_abort = cm:get_faction(originating_faction):is_human()
+    self.safety_abort = false
 
     --we now return our brand new object.
     return self

@@ -5,8 +5,42 @@
 ---If you're looking at this script because you're trying to override the images for a custom pooled resource, message me on https://discord.gg/4ee5vVB @DrunkFlamingo and I will help you set the script up.
 
 
+RF_LOG_ALLOWED = true;
 
 
+
+function RF_REFRESH_LOG()
+if not RF_LOG_ALLOWED then
+	return;
+end
+
+local logTimeStamp = os.date("%d, %m %Y %X")
+--# assume logTimeStamp: string
+
+local popLog = io.open("WEC_LOG.txt","w+")
+popLog :write("NEW LOG ["..logTimeStamp.."] \n")
+popLog :flush()
+popLog :close()
+end
+
+--v function(text: string)
+function RFLOG(text)
+ftext = "OWR" 
+--sometimes I use ftext as an arg of this function, but for simple mods like this one I don't need it.
+
+if not RF_LOG_ALLOWED then
+	return; --if our bool isn't set true, we don't want to spam the end user with logs. 
+end
+
+local logText = tostring(text)
+local logContext = tostring(ftext)
+local logTimeStamp = os.date("%d, %m %Y %X")
+local popLog = io.open("WEC_LOG.txt","a")
+--# assume logTimeStamp: string
+popLog :write("WEC:  "..logText .. "    : [" .. logContext .. "] : [".. logTimeStamp .. "]\n")
+popLog :flush()
+popLog :close()
+end
 
 
 
@@ -30,7 +64,7 @@ dwarven_factions_list = {
 	"wh2_main_dwf_greybeards_prospectors",
 	"wh2_main_dwf_karak_zorn",
 	"wh2_main_dwf_spine_of_sotek_dwarfs"
-};
+} --:vector<string>
 
 
 
@@ -54,7 +88,7 @@ icon_table_dwf_craft = {
 {"mortuary_cult", "listview", "list_clip", "list_box", "df_master_rune_of_skalf_blackhammer", "requirement_list", "dwf_knowledge"},
 {"mortuary_cult", "listview", "list_clip", "list_box", "df_master_rune_of_snorri_spangelhelm", "requirement_list", "dwf_knowledge"},
 {"mortuary_cult", "listview", "list_clip", "list_box", "df_master_rune_of_swiftness", "requirement_list", "dwf_knowledge"}
-};
+}--:vector<vector<string>>
 
 
 
@@ -62,7 +96,7 @@ icon_table_dwf_craft = {
 icon_table_kraka_drak = {
 {"mortuary_cult", "listview", "list_clip", "list_box", "runic_forge_dragon_rune_of_drak", "requirement_list", "dwf_knowledge"},
 {"mortuary_cult", "listview", "list_clip", "list_box", "runic_forge_dragon_rune_of_valar_grunsonn", "requirement_list", "dwf_knowledge"}
-};
+}--:vector<vector<string>>
 
 
 
@@ -110,39 +144,37 @@ dwf_craft_button_list = {
 {"mortuary_cult", "listview", "list_clip", "list_box", "runic_forge_dragon_rune_of_frostbite"},
 {"mortuary_cult", "listview", "list_clip", "list_box", "runic_forge_dragon_rune_of_the_north"},
 {"mortuary_cult", "listview", "list_clip", "list_box", "runic_forge_dragon_rune_of_valar_grunsonn"}
-};
+}--:vector<vector<string>>
 
 
 
 
+--v function(context: WHATEVER)
+function df_trade_gainz(context)
+	
 
+	for j = 1, #cm:get_human_factions() do	
+		local current_player = cm:get_human_factions()[j]
+		RFLOG("DFCRAFT firing trade listener, "..tostring(current_player).." is the player faction");
+		if cm:get_faction(current_player):subculture() == "wh_main_sc_dwf_dwarfs" then
+			for i = 1, #dwarven_factions_list do
 
-
-
-function df_dwf_forge()
-	if not cm:is_multiplayer() then
-		cm:set_saved_value("df_dwf_forge", true);
-		jar_list_init("wh_main_sc_dwf_dwarfs", "active");
-		
-		df_player_faction = cm:get_local_faction();
-		local faction = cm:model():world():faction_by_key(df_player_faction);
-		df_subculture = faction:subculture();
-		
-		
-		
-		if df_subculture == "wh_main_sc_dwf_dwarfs" then
-			output("DFCRAFT: player is a dwarf, setting up listeners");
-			if get_faction("wh_main_dwf_kraka_drak"):is_human() and cm:get_saved_value("Cataph_Kraka_Drak") == true then 
-				custom_cat_init("wh_main_dwf_kraka_drak", "active");
-				add_drak_listeners()
-			else 
-				custom_cat_init("wh_main_dwf_kraka_drak", "disabled");
-			end
-			add_forge_listeners()
+				local current_dwarf = dwarven_factions_list[i]
+				local player_faction = cm:get_faction(current_player)
+				local current_faction = cm:get_faction(current_dwarf)
+				if not (player_faction == current_faction) then
+					RFLOG("DFCRAFT: checking trade with "..tostring(current_faction:name()).." to award gromril");
+					if cm:faction_has_trade_agreement_with_faction(player_faction, current_faction) then
+						RFLOG("DFCRAFT: trade check passed");
+						cm:pooled_resource_mod(player_faction:command_queue_index(), "tmb_canopic_jars", "wh2_dlc09_resource_factor_great_incantation_of_geheb", 1);
+					end
+				end
+			end	
 		end
 	end
-   
-end
+end;
+
+
 
 
 
@@ -159,7 +191,7 @@ function add_forge_listeners()
 core:add_listener(
 	"dwarfgromriltrade",
 	"FactionTurnStart",
-	function(context) return context:faction():name() == df_player_faction end,
+	function(context) return context:faction():subculture() == "wh_main_sc_dwf_dwarfs" end,
 	function(context) df_trade_gainz(context) end,
 	true);
 	
@@ -191,18 +223,32 @@ core:add_listener(
 	true);
 	
 	
-	
-	
-	
-add_ui_listeners();
 		
 		
-		
-output("DFCRAFT: listeners set");
+	RFLOG("DFCRAFT: listeners set");
 
 
 end;
-		
+
+
+
+function wec_runic_forge()
+	out("WEC: Runic Forge Script Running")
+	RF_REFRESH_LOG()
+	RFLOG("Init Starting")
+	add_forge_listeners()
+
+
+end
+
+
+
+
+
+
+
+
+--[[
 		
 function add_ui_listeners()
 
@@ -214,7 +260,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_cat_wh_main_sc_dwf_dwarfs_1")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_1");
+		RFLOG("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_1");
 		cm:callback( function() override_ancestral_image() end);
 	end,
 	true);
@@ -227,7 +273,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_cat_wh_main_sc_dwf_dwarfs_2")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_2");
+		RFLOG("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_2");
 		cm:callback( function() override_ancestral_image() end, 0.1);
 	end,
 	true);
@@ -241,7 +287,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_cat_wh_main_sc_dwf_dwarfs_3")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_3");
+		RFLOG("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_3");
 		cm:callback( function() override_ancestral_image() end, 0.1);
 	end,
 	true);
@@ -254,7 +300,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_cat_wh_main_sc_dwf_dwarfs_4")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_4");
+		RFLOG("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_4");
 		cm:callback( function() override_ancestral_image() end, 0.1);
 	end,
 	true);
@@ -267,7 +313,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_cat_wh_main_sc_dwf_dwarfs_5")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_5");
+		RFLOG("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_5");
 		cm:callback( function() override_ancestral_image() end, 0.1);
 	end,
 	true);
@@ -280,7 +326,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_cat_wh_main_sc_dwf_dwarfs_6")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_2");
+		RFLOG("DFCRAFT: setting the current panel to cmf_cat_wh_main_sc_dwf_dwarfs_2");
 		cm:callback( function() override_ancestral_image() end, 0.1);
 	end,
 	true);
@@ -293,7 +339,7 @@ core:add_listener(
 		return uic:Id() == "button" and uicomponent_descended_from(uic, "cmf_custom_cat_kraka_drak")
 	end,
 	function(context)
-		output("DFCRAFT: setting the current panel to cmf_custom_cat_kraka_drak");
+		RFLOG("DFCRAFT: setting the current panel to cmf_custom_cat_kraka_drak");
 		cm:callback( function() override_kraka_image() end, 0.1);
 	end,
 	true);
@@ -311,24 +357,22 @@ end;
 function override_ancestral_image()
 
 
-for i = 1, #icon_table_dwf_craft do
-	current_path = icon_table_dwf_craft[i];
-	current_icon = find_uicomponent_from_table(core:get_ui_root(), current_path);
-	if is_uicomponent(current_icon) then
-		output("DFCRAFT: overwriting an image");
-		current_icon:SetImage("ui/campaign ui/technologies/wh_main_dwf_grimnirs_favour.png");
-		
-		local compA = find_uicomponent(current_icon, "icon");
-		if not not compA then
-			compA:SetVisible(false);
+		for i = 1, #icon_table_dwf_craft do
+		current_path = icon_table_dwf_craft[i];
+		current_icon = find_uicomponent_from_table(core:get_ui_root(), current_path);
+		if is_uicomponent(current_icon) then
+			RFLOG("DFCRAFT: overwriting an image");
+			current_icon:SetImage("ui/campaign ui/technologies/wh_main_dwf_grimnirs_favour.png");
+			
+			local compA = find_uicomponent(current_icon, "icon");
+			if not not compA then
+				compA:SetVisible(false);
+			end
+			RFLOG("done");
+
 		end
-		output("done");
-
-	end
-end
-
+		end
 --df_test_component_printer()
-
 end;
 
 
@@ -342,37 +386,37 @@ giantsbaneIcon = find_uicomponent_from_table(core:get_ui_root(), icon_table_gian
 frostbiteIcon = find_uicomponent_from_table(core:get_ui_root(), icon_table_frostbite);
 
 if is_uicomponent(giantsbaneIcon) then
-	output("DFCRAFT: setting the giantsbane icon")
+	RFLOG("DFCRAFT: setting the giantsbane icon")
 	giantsbaneIcon:SetImage("ui/campaign ui/technologies/wh_main_dwf_slayers_onslaught.png");
 	local CompB = find_uicomponent(giantsbaneIcon, "icon");
 	if not not CompB then
 		CompB:SetVisible(false);
 	end
-	output("done");
+	RFLOG("done");
 end
 
 if is_uicomponent(frostbiteIcon) then
-	output("DFCRAFT: setting the frostbite icon")
+	RFLOG("DFCRAFT: setting the frostbite icon")
 	frostbiteIcon:SetImage("ui/campaign ui/technologies/wh_main_dwf_interchangable_parts.png");
 	local CompB = find_uicomponent(frostbiteIcon, "icon");
 	if not not CompB then
 		CompB:SetVisible(false);
 	end
-	output("done");
+	RFLOG("done");
 end
 
 for i = 1, #icon_table_kraka_drak do
 	current_path = icon_table_kraka_drak[i];
 	current_icon = find_uicomponent_from_table(core:get_ui_root(), current_path);
 	if is_uicomponent(current_icon) then
-		output("DFCRAFT: overwriting an image");
+		RFLOG("DFCRAFT: overwriting an image");
 		current_icon:SetImage("ui/campaign ui/technologies/wh_main_dwf_grimnirs_favour.png");
 		
 		local compA = find_uicomponent(current_icon, "icon");
 		if not not compA then
 			compA:SetVisible(false);
 		end
-		output("done");
+		RFLOG("done");
 
 	end
 end
@@ -386,7 +430,7 @@ end;
 function df_test_component_printer()
 
 
-output("DWFCRAFT: fixing craft buttons");
+RFLOG("DWFCRAFT: fixing craft buttons");
 
 
 for i = 1, #dwf_craft_button_list do
@@ -407,27 +451,6 @@ end;
 
 
 
-function df_trade_gainz(context)
-	
-output("DFCRAFT firing trade listener, "..tostring(df_player_faction).." is the player faction");
-		
-for i = 1, #dwarven_factions_list do
-	local current_dwarf = dwarven_factions_list[i]
-	local player_faction = get_faction(df_player_faction)
-	local current_faction = get_faction(current_dwarf)
-	if not (player_faction == current_faction) then
-		output("DFCRAFT: checking trade with "..tostring(current_faction:name()).." to award gromril");
-		if faction_has_trade_agreement_with_faction(player_faction, current_faction) then
-			output("DFCRAFT: trade check passed");
-			cm:pooled_resource_mod(player_faction:command_queue_index(), "tmb_canopic_jars", "wh2_dlc09_resource_factor_great_incantation_of_geheb", 1);
-		end
-	end
-end
-		
-		
-		
-		
-end;
 
 
 
@@ -441,7 +464,7 @@ end;
 
 function add_drak_listeners()
 
-output("Adding kraka drak listeners");
+RFLOG("Adding kraka drak listeners");
 core:add_listener(
 	"reconquestofdorden",
 	"ResearchCompleted",
@@ -460,14 +483,4 @@ core:add_listener(
 
 end;
 
-
-		
-function faction_has_trade_agreement_with_faction(faction_a, faction_b)
-	local trade_list = faction_a:factions_trading_with();
-	for i = 0, trade_list:num_items() - 1 do
-		if trade_list:item_at(i) == faction_b then
-			return true;
-		end;
-	end;
-	return false;
-end;
+]]
