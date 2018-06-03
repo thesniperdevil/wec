@@ -38,16 +38,78 @@ function LLRLOG(text)
   popLog :close()
 end
 
+function LLR_REFRESH_LOG()
+    if not isLogAllowed then
+        return;
+    end
+
+    local logTimeStamp = os.date("%d, %m %Y %X")
+    --# assume logTimeStamp: string
+
+    local popLog = io.open("WEC_LOG.txt","w+")
+    popLog :write("NEW LOG ["..logTimeStamp.."] \n")
+    popLog :flush()
+    popLog :close()
+end
+LLR_REFRESH_LOG()
+
+--v function(msg: string)
+function WEC_ERROR(msg)
+	local ast_line = "********************";
+	
+	-- do output
+	print(ast_line);
+	print("SCRIPT ERROR, timestamp " .. get_timestamp());
+	print(msg);
+	print("");
+	print(debug.traceback("", 2));
+	print(ast_line);
+	-- assert(false, msg .. "\n" .. debug.traceback());
+	
+	-- logfile output
+		local file = io.open("WEC_ERROR.txt", "a");
+		
+		if file then
+			file:write(ast_line .. "\n");
+			file:write("SCRIPT ERROR, timestamp " .. get_timestamp() .. "\n");
+			file:write(msg .. "\n");
+			file:write("\n");
+			file:write(debug.traceback("", 2) .. "\n");
+			file:write(ast_line .. "\n");
+			file:close();
+		end;
+end;
+
+
 
 
 
 --v function(subtype: string, forename: string, surname: string, originating_faction: string) --> LLR_LORD
 function llr_lord.new(subtype, forename, surname, originating_faction)
 
+    --error checking
+    if not is_string(subtype) then
+        WEC_ERROR("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied subtype is not a string!");
+        return nil
+    end
+    if not is_string(forename) then
+        WEC_ERROR("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied forename is not a string!");
+        return nil
+    end
+    if not is_string(surname) then
+        WEC_ERROR("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied surname is not a string!");
+        return nil
+    end
+    if not is_string(originating_faction) then
+        WEC_ERROR("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied originating_faction is not a string!");
+        return nil
+    end
+    --function
     LLRLOG("Adding lord with subtype ["..subtype.."], forename ["..forename.."], surname ["..surname.."] and originating faction ["..originating_faction.."] ")
     local self = {} --once again, we are defining the object as a blank because the type checker prefers this style of doing it.
     setmetatable(self, {
-        __index = llr_lord
+        __index = llr_lord,
+        __tostring = function() return "llr_lord" end
     }) 
     -- this basically tells the table we just created to take on the properties of that object type. 
     -- now, any function we define as llr_lord.something can be applied to this object.
@@ -62,6 +124,8 @@ function llr_lord.new(subtype, forename, surname, originating_faction)
     --these add the args we gave as the fields/properties of the object. 
     self.has_quest_set = false --:boolean
     self.quest_ancilaries = {} --:vector<string>
+    self.has_immortal_trait_set = false --: boolean
+    self.immortal_trait = nil --:string
     --quests won't re-trigger if the AI has already completed them, so we're going to have to reset them manually.
 
 
@@ -97,27 +161,49 @@ function llr_lord.has_quests(self)
     return self.has_quest_set
 end
 
-
+--v function(self: LLR_LORD) --> boolean
+function llr_lord.has_immortal_trait(self)
+    LLRLOG("Has immortal traits returning ["..tostring(self.has_immortal_trait_set).."]")
+    return self.has_immortal_trait_set
+end
 
 
 --this method is a mutator, or a setter. 
 --it adds data to the model
 --v function(self: LLR_LORD, quest_table: vector<string>)
 function llr_lord.add_quest(self, quest_table)
+    if not tostring(self) == "llr_lord" then
+        WEC_ERROR("method #llr_lord.add_quest(self, quest_table)# not applied to a correct object!")
+        return
+    elseif not is_table(quest_table) then
+        WEC_ERROR("method #llr_lord.add_quest(self, quest_table)# called with a non table quest record!")
+        return
+    end
     LLRLOG("Adding quests for ["..self.subtype.."] ")
     self.quest_ancilaries = quest_table
     self.has_quest_set = true
 end
 
+--v function(self: LLR_LORD, trait_key: string)
+function llr_lord.add_immortal_trait(self, trait_key)
+    if not tostring(self) == "llr_lord" then
+        WEC_ERROR("method #llr_lord.add_immortal_trait(self, trait_key)# not applied to a correct object!")
+        return
+    elseif not is_string(trait_key) then
+        WEC_ERROR("method #llr_lord.add_immortal_trait(self, trait_key)# called with a non-string trait key!")
+        return
+    end
 
+    self.has_immortal_trait_set = true
+    self.immortal_trait = trait_key
+end
 
 
 --this one is a little more complicated. It checks if a lord is on the map after confederation has happened.
---v function(self: LLR_LORD, faction: string) --> boolean
+--v function(self: LLR_LORD, faction: string) --> CA_CHAR
 function llr_lord.survived_confederation(self, faction)
 
     --we are trying to find something, so we set a variable to say whether we found it.
-    _llrRetval = false --:boolean
     local character_faction = cm:get_faction(faction);
     local character_list = character_faction:character_list();
     --CA objects are imported from the game engine, which is written in another languages. 
@@ -127,26 +213,29 @@ function llr_lord.survived_confederation(self, faction)
         local character = character_list:item_at(i); --item_at(i) is equivalent to [i]
 
         if character:character_subtype(self.subtype)  then --since we are only looking for legendary lords, we only need to check for the subtype. 
-            _llrRetval = true; 
-            --really I should break; here because it would save on performance. 
+            LLRLOG("survived_confederation Returning [true]")
+            return character
         end
     end
-    LLRLOG("survived_confederation Returning ["..tostring(_llrRetval).."]")
-    return _llrRetval;
+    LLRLOG("survived_confederation Returning [false]")
+    return nil
 end
+
+
+
+
 
 
 
 --v function(self: LLR_LORD, human_faction_name: string)
 function llr_lord.respawn_to_pool(self, human_faction_name)
-    --no longer necessary
-    --[[
+
     LLRLOG("Respawning lord with subtype ["..self.subtype.."] to pool!")
     --a simple one, I just need to respawn a lord to the pool with one command. 
     cm:spawn_character_to_pool(human_faction_name, self.forename, self.surname, "", "", 18, true, "general", self.subtype, true, "");
     --notice how the information I need for the lord is all taken from the object, 
     --but I use human_faction dynamically because there could potential be a situation where players could both confederate a lord. (bret)
-]]
+
     LLRLOG("Lord with subtype ["..self.subtype.."] confederated but not currently on the map!")
 end
 
@@ -162,8 +251,8 @@ function llr_lord.grant_quest_items(self, cqi)
 
 end
 
---v function(self: LLR_LORD, faction: string)
-function llr_lord.respec(self, faction)
+--v function(self: LLR_LORD, faction: string, character: CA_CHAR)
+function llr_lord.respec_char_with_army(self, faction, character)
     local exp_to_levels_table = {
         0, 900,  1900,  3000, 4200,  5500,6870, 8370, 9940,
       11510,13080,14660, 16240,17820,19400, 20990,22580,24170,25770,27370,28980,30590,32210,
@@ -178,18 +267,11 @@ function llr_lord.respec(self, faction)
     LLRLOG("Respecing lord with subtype ["..self.subtype.."] ")
 
     --this will catch any mishandle of the respec
-    if self.safety_abort == true then
-        LLRLOG("Aborting Respec, tried to respec a lord that originates from a human faction !?!?")
+    local character_faction = cm:get_faction(faction)
+    if cm:get_faction(self.faction):is_human() then
+        WEC_ERROR("llr_lord.respec_char_with_army(self, faction, character) tried to act on a human faction? ABORTING ")
         return
     end
-
-    local character_faction = cm:get_faction(faction);
-    local character_list = character_faction:character_list();
-    LLRLOG("Cycling through the character list to find the new character")
-    --once again, we are handling imported objects, not lists. This means we use the modified loop.
-    --here we cycle through the faction's characters to find the newly aquired lord.
-    for i = 0, character_list:num_items() - 1 do
-        local character = character_list:item_at(i);
 
         if character:character_subtype(self.subtype) and character:get_forename() == self.forename then --if the forename and subtype match, we've found him.
             LLRLOG("Checkpoint 2: Found our desired character.")
@@ -240,6 +322,11 @@ function llr_lord.respec(self, faction)
             cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
             --now, we need to strip immortality from the character
             cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
+
+            if self:has_immortal_trait() == true then
+                cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), self.immortal_trait)
+            end
+
             --finally, we kill him and his army.
             cm:kill_character(character:command_queue_index(), true, true)
             --turn message back on on a callback.
@@ -276,9 +363,9 @@ function llr_lord.respec(self, faction)
             0.1
         );
         --break otherwise the loop might find the character again and keep doing this infinitely.
-        break;
+        return
         end
-    end
+    WEC_ERROR("method: #llr_lord.respec_char_with_army(self, faction)# called but cannot find the lord to respec! Something went wrong.")
 end
 
 --we are creating another object now, this one to handle all those little objects we made. 
@@ -287,7 +374,8 @@ function llr_manager.new()
   LLRLOG("Creating the manager!");
     local self = {}
     setmetatable(self, {
-        __index = llr_manager
+        __index = llr_manager,
+        __tostring = function() return "llr_lord" end
     })
     --# assume self: LLR_MANAGER
     local cm = get_cm() --this isn't 100% necessary, but its safe.
@@ -316,24 +404,104 @@ end
 --unlike the other methods we've looked at, which were basically functional or accessors, this one is a "mutator", or a "setter"
 --it adds or edits information in the model.
 --v function(self: LLR_MANAGER, lord: LLR_LORD)
-  function llr_manager.add_lord(self, lord) 
+function llr_manager.add_lord(self, lord) 
+    if not tostring(self) == "llr_manager" then
+        WEC_ERROR("method #llr_manager.add_lord(self, lord)# called but is not being applied to a correct object!")
+        return
+    end
+    if not tostring(lord) == "llr_lord" then
+        WEC_ERROR("method #llr_manager.add_lord(self, lord)# called but the supplied lord is not a LLR_LORD object!")
+    end
+
+
     LLRLOG("Adding a lord to manager!");
     --first of all, we want to get the faction associated with the lord object we've been given. 
     local faction = lord:get_faction()
     --if we haven't stored any lords for this faction yet, then the index for them isn't going to be initialised.
     --trying to table.insert into soemthing that isn't yet a table would crash the script, not good!
-    if self.lords[faction] == nil then self.lords[faction] = {} end;
+    if self.lords[faction] == nil then
+         self.lords[faction] = {} 
+    end
+
     --this will handle that problem.
-      local t = self.lords[faction] --get a handle on the index of lords for that faction
-      table.insert(t, lord) --insert our new lord
-      self.factions[faction] = true --tell the script to check for this faction when listening for confederations. 
-      --we can do the above multiple times because as long as it is true, it works.
-  end
+        local t = self.lords[faction] --get a handle on the index of lords for that faction
+        table.insert(t, lord) --insert our new lord
+        self.factions[faction] = true --tell the script to check for this faction when listening for confederations. 
+        --we can do the above multiple times because as long as it is true, it works.
+end
+
+--v function(self: LLR_MANAGER, subtype: string, faction: string) --> LLR_LORD
+function llr_manager.find_lord_with_subtype(self, subtype, faction)
+
+    --error checks
+
+    if not tostring(self) == "llr_manager" then
+        WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but is not being applied to a correct object!")
+        return nil
+    end
+    if not is_string(subtype) then
+        WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but the supplied subtype is not a string! ")
+        return nil
+    elseif not is_string(faction) then
+        WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but the supplied faction is not a string! ")
+        return nil
+    end
+    --function
+
+    LLRLOG("Find Lord with Subtype called for subtype ["..subtype.."] and faction ["..faction.."] ")
+    if self.lords[faction] == nil then
+        self.lords[faction] = {}
+        WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but no lord could be found!")
+        return nil
+    else
+        for i = 1, #self.lords[faction] do
+            if self.lords[faction][i].subtype == subtype then
+                LLRLOG("Retrieved lord with subtype ["..subtype.."] and faction ["..faction.."] from the model ")
+                return self.lords[faction][i]
+            end
+        end
+        WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but no lord could be found!")
+        return nil
+    end
+end
+
+--v function(self: LLR_MANAGER, subtype: string, faction: string)
+function llr_manager.remove_lord(self, subtype, faction)
+    if not tostring(self) == "llr_manager" then
+        WEC_ERROR("method #llr_manager.remove_lord(self, subtype, faction)# called but is not being applied to a correct object!")
+        return 
+    end
+    if not is_string(subtype) then
+        WEC_ERROR("method #llr_manager.remove_lord(self, subtype, faction)# called but the supplied subtype is not a string! ")
+        return 
+    elseif not is_string(faction) then
+        WEC_ERROR("method #llr_manager.remove_lord(self, subtype, faction)# called but the supplied faction is not a string! ")
+        return
+    end
+
+    LLRLOG("Remove Lord called for subtype ["..subtype.."] and faction ["..faction.."] ")
+    if self.lords[faction] == nil then
+        self.lords[faction] = {}
+        WEC_ERROR("method #llr_manager.remove_lord(self, subtype, faction)# called but no lord could be found!")
+        return
+    else
+        for i = 1, #self.lords[faction] do
+            if self.lords[faction][i].subtype == subtype then
+                LLRLOG("Removed lord with subtype ["..subtype.."] and faction ["..faction.."] from the model ")
+                table.remove(self.lords[faction], i)
+                return 
+            end
+        end
+        WEC_ERROR("method #llr_manager.remove_lord(self, subtype, faction)# called but no lord could be found!")
+        return
+    end
+end
+
 
 --v function(self: LLR_MANAGER)
 function llr_manager.activate(self)
     --time to tell our manager to actually do stuff!
-  LLRLOG("Activating the Manager!");
+    LLRLOG("Activating the Manager!");
     core:trigger_event("LegendaryLordModelActivated")
     --this event is listened for by other mods, to know when to add their lords into the system!
     
@@ -355,9 +523,13 @@ function llr_manager.activate(self)
             for k, v in pairs(self.lords) do
               if k == faction_name then --we only want lords who are from the faction being confederated
                 for i = 1, #v do
-                    if v[i]:survived_confederation(confederation_name) then --if they have survived the confederation (IE they are alive on the map)
-                        --we have to reset the quests for this lord!
-                        v[i]:respec(confederation_name) --we use the respec method we defined earlier.
+                    local character = v[i]:survived_confederation(confederation_name)
+                    if character then --if they have survived the confederation (IE they are alive on the map)
+                        if not character:is_wounded() then
+                            v[i]:respec_char_with_army(confederation_name, character) --we use the respec method we defined earlier.
+                        else
+                            LLRLOG("Char is wounded!")
+                        end
                     else --otherwise, if we can't find them on the map
                         v[i]:respawn_to_pool(confederation_name) -- we give them to our confederator.
                     end
@@ -370,12 +542,12 @@ function llr_manager.activate(self)
 end
 
 --for other mods to use these functions, we need to add them to the game space, making them public.
-_G.llr_manager = llr_manager; --this one doesn't really need to be touched by anyone else, but whatever.
+_G.llr_manager = llr_manager; 
 _G.llr_lord = llr_lord --this will let other people create new llr_lord objects
 LLRLOG("Init Finished")
 out("WEC: LEGENDARY LORD REVIVES ACTIVE") --we want to leave some trace of our mod in the general log.
 
-function wec_ll_revival() --this is the function that CMF (our script loading infrastructure) calls at the start of a session.
+function wec_llr() --this is the function that the CA script loader calls.
 
 LLRLOG("Checkpoint [1]")
 llr = llr_manager.new() --create our manager
@@ -622,8 +794,11 @@ for i = 1, #vanilla_lords do --start looping through the information we just def
   end
   llr:add_lord(lord) --add the new lord to our model.
 end
+    LLRLOG("Triggering the Vanilla Lords Added Event")
+    core:trigger_event("LegendaryLordVanillaLordsAdded")
 
-	
+
+
 end
 
 --THE FUCKING END

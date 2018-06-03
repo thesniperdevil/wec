@@ -148,6 +148,9 @@
 
 --# assume CM.force_add_trait: method(character_cqi: CA_CQI, trait_key: string, showMessage: boolean)
 --# assume CM.force_add_trait_on_selected_character: method(trait_key: string)
+--# assume CM.force_remove_trait: method(lookup: string, trait_key: string)
+
+
 --# assume CM.disable_event_feed_events: method(disable: boolean, categories: string, subcategories: string, events: string)
 --# assume CM.trigger_incident: method(factionName: string, incidentKey: string, fireImmediately: boolean)
 --# assume CM.apply_effect_bundle_to_characters_force: method(bundleKey: string, charCqi: CA_CQI, turns: number, useCommandQueue: boolean)
@@ -222,6 +225,7 @@
 --# assume CA_CHAR.command_queue_index: method() --> CA_CQI
 --# assume CA_CHAR.rank: method() --> int
 --# assume CA_CHAR.won_battle: method() --> boolean
+--# assume CA_CHAR.is_wounded: method() --> boolean
 -- CHARACTER LIST
 --# assume CA_CHAR_LIST.num_items: method() --> number
 --# assume CA_CHAR_LIST.item_at: method(index: number) --> CA_CHAR
