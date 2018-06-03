@@ -5,3 +5,6 @@
 
 --# assume global class CIM
 --# assume global class CIP
+
+
+--# assume global class KOU_MODEL
