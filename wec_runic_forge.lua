@@ -23,7 +23,7 @@ end
 
 --v function(text: string)
 function RFLOG(text)
-ftext = "OWR" 
+ftext = "RF" 
 --sometimes I use ftext as an arg of this function, but for simple mods like this one I don't need it.
 
 if not RF_LOG_ALLOWED then
