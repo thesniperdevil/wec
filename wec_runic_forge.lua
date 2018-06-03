@@ -234,7 +234,7 @@ core:add_listener(
 		"Dwf_Panel_Resize",
   		"ComponentLClickUp",
 		function(context) 
-			return context.string == "button_mortuary_cult"; 
+			return context.string == "button_mortuary_cult" and cm:get_faction(cm:whose_turn_is_it()):subculture() == "wh_main_sc_dwf_dwarfs"
 		end,
 		function(context)
 			cm:callback( function()
