@@ -1,8 +1,6 @@
 --DF-VANDY DWARVEN FORGE PROJECT SCRIPT
 --Writen by Drunk Flamingo
-
-
----If you're looking at this script because you're trying to override the images for a custom pooled resource, message me on https://discord.gg/4ee5vVB @DrunkFlamingo and I will help you set the script up.
+--last updated 6/3/2018
 
 
 RF_LOG_ALLOWED = true;
@@ -68,7 +66,7 @@ dwarven_factions_list = {
 
 
 
-
+--[[
 
 
 icon_table_dwf_craft = {
@@ -176,9 +174,16 @@ end;
 
 
 
+]]
 
-
-
+function resize_panel() 
+	RFLOG("Resizing Panel")
+    local component = find_uicomponent(core:get_ui_root(), "mortuary_cult");
+    local size_x, size_y = component:Dimensions();
+    component:SetCanResizeWidth(true);
+	component:Resize(size_x + 200, size_y)
+	component:SetCanResizeWidth(false);
+end;
 
 
 
@@ -188,6 +193,7 @@ end;
 
 function add_forge_listeners()
 
+	--[[
 core:add_listener(
 	"dwarfgromriltrade",
 	"FactionTurnStart",
@@ -221,6 +227,22 @@ core:add_listener(
 	end
 	end,
 	true);
+]]
+
+
+	core:add_listener(
+		"Dwf_Panel_Resize",
+  		"ComponentLClickUp",
+		function(context) 
+			return context.string == "button_mortuary_cult"; 
+		end,
+		function(context)
+			cm:callback( function()
+			resize_panel()
+			end, 0.1);
+		end,
+		true
+	)
 	
 	
 		
