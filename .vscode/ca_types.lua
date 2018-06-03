@@ -316,7 +316,7 @@
 --# assume CA_FACTION.has_effect_bundle: method(bundle:string) --> boolean
 --# assume CA_FACTION.home_region: method() --> CA_REGION
 --# assume CA_FACTION.command_queue_index: method() --> CA_CQI
-
+--# assume CA_FACTION.is_null_interface: method() --> boolean
 
 -- FACTION LIST
 --# assume CA_FACTION_LIST.num_items: method() --> number
