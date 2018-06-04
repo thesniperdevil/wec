@@ -11,26 +11,22 @@ Fields:
     "QueueTable": vector<unit_component_ID: string>: Stores the queue of the character.
     "CurrentRestrictions": map<unit_component_ID: string, boolean>: Stores the units that should be recruitable.
     "QueueEmpty": boolean: stores whether the QueueTable has anything in it.
-    "QueueCount": map<unit_component_ID, number>: stores the quantity of each unit in the Queue.
     "CurrentArmy": vector<string>: Stores the army of the character. Refreshed whenever the character is selected.
-    "ArmyCount":  map<unit_component_ID, number>: stores the quantity of each unit in the Army.
     "TotalCount": map<unit_component_ID, number>: stores the quantity of each unit in the Army + QUEUE.
     "RegionKey": string : Stores the key of the current region of the character. Refreshed whenever the character is selected.
 ----------------------------------------------------
 Methods:
-    "Create": private: (cqi: CA_CQI): creates a blank character object.
-    "Load": private: (cqi: CA_CQI, vector<unit_component_ID: string>): creates a character object with a provided queuetable.
-    "Save": private: () --> cqi, vector<unit_component_ID: string> : returns the cqi and queuetable for saving.
-    "AddToQueue": private: (unit_component_ID: string): adds a unit to the queue.
-    "RemoveFromQueue": private: (QueuedLandUnitComponentID: string): calculates the queue position for the component and removes the relevant unit.
-    "EvaluateArmy": private: (): refreshes the army list to reflect the gamestate.
-    "SetCounts" : private: (): counts the queue table, army list, and total counts.
-    "GetCounts" : private: () --> map<unit_component_ID, number>: gets the TotalCount field
-    "EmptyQueue": private: (): sets the QueueEmpty boolean to true, and empties the QueueTable.
-    "IsQueueEmpty": private: () --> boolean : returns the QueueEmpty Boolean.
-    "SetRegion" : private: (): sets the RegionKey field
-    "GetRegion" : private: () --> string: gets the RegionKey field
-    "GetTotalCount": private () --> map<string, number>: returns the TotalCount field
+    -"Create": private: (cqi: CA_CQI): creates a blank character object.
+    -"Load": private: (cqi: CA_CQI, vector<unit_component_ID: string>): creates a character object with a provided queuetable.
+    -"Save": private: () --> cqi, vector<unit_component_ID: string> : returns the cqi and queuetable for saving.
+    -"AddToQueue": private: (unit_component_ID: string): adds a unit to the queue.
+    -"RemoveFromQueue": private: (QueuedLandUnitComponentID: string): calculates the queue position for the component and removes the relevant unit.
+    -"EvaluateArmy": private: (): refreshes the army list to reflect the gamestate.
+    -"SetCounts" : private: (): counts the queue table, army list, and total counts.
+    -"EmptyQueue": private: (): sets the QueueEmpty boolean to true, and empties the QueueTable.
+    -"IsQueueEmpty": private: () --> boolean : returns the QueueEmpty Boolean.
+    -"SetRegion" : private: (): sets the RegionKey field
+    -"GetRegion" : private: () --> string: gets the RegionKey field
     "GetTotalCountForUnit": private(unit_component_ID: string) --> number: returns the TotalCount for a specific unit.
     "GetRegionKey": private () --> string: returns the RegionKey field.
     "SetManager": private: (manager: RECRUITER_MANAGER): gives the object access to its manager.
