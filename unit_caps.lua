@@ -18,9 +18,9 @@ Fields:
     "RegionKey": string : Stores the key of the current region of the character. Refreshed whenever the character is selected.
 ----------------------------------------------------
 Methods:
-    "create": private: (cqi: CA_CQI): creates a blank character object.
-    "load": private: (cqi: CA_CQI, vector<unit_component_ID: string>): creates a character object with a provided queuetable.
-    "save": private: () --> cqi, vector<unit_component_ID: string> : returns the cqi and queuetable for saving.
+    "Create": private: (cqi: CA_CQI): creates a blank character object.
+    "Load": private: (cqi: CA_CQI, vector<unit_component_ID: string>): creates a character object with a provided queuetable.
+    "Save": private: () --> cqi, vector<unit_component_ID: string> : returns the cqi and queuetable for saving.
     "AddToQueue": private: (unit_component_ID: string): adds a unit to the queue.
     "RemoveFromQueue": private: (QueuedLandUnitComponentID: string): calculates the queue position for the component and removes the relevant unit.
     "EvaluateArmy": private: (): refreshes the army list to reflect the gamestate.
@@ -70,18 +70,22 @@ Methods:
         Calls ApplyRestrictionToUnit()
     ----------------------------------------------------
     "OnCharacterSelected": private: (context: CA_CONTEXT): 
-        If a RECRUITER_CHARACTER does not exist for the character context CQI, calls create()
+        If a RECRUITER_CHARACTER does not exist for the character context CQI, calls Create()
             Calls EvaluateArmy()
             Calls SetCounts()
             Calls SetRegion()
             Calls EvaluateAllRestrictions()
     ----------------------------------------------------
-    "OnCharacterFinishedMoving": private: (context: CA_CONTEXT)
-        If a RECRUITER_CHARACTER does not exist for the character context, calls create()
+    "OnCharacterFinishedMoving": private: (context: CA_CONTEXT) :
+        If a RECRUITER_CHARACTER does not exist for the character context, calls Create()
             If IsQueueEmpty returns false, calls EmptyQueue()
     ----------------------------------------------------
-    
-         
+    "Save": private : () --> map<CA_CQI, vector<unit_component_ID: string>> :
+        for each value in the Characters field, call Save() and add the results to a save table, then return the save table.
+    ----------------------------------------------------
+    "Load": private : (map<CA_CQI, vector<unit_component_ID: string>>) :
+        for each pair of CQI and QueueTable call CHARACTER_RECRUITER.Load()
+    ----------------------------------------------------
 ----------------------------------------------------
 EVENT BASED SCRIPTING
 ----------------------------------------------------
