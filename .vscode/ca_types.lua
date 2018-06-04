@@ -226,6 +226,7 @@
 --# assume CA_CHAR.rank: method() --> int
 --# assume CA_CHAR.won_battle: method() --> boolean
 --# assume CA_CHAR.is_wounded: method() --> boolean
+--# assume CA_CHAR.has_military_force: method() --> boolean
 -- CHARACTER LIST
 --# assume CA_CHAR_LIST.num_items: method() --> number
 --# assume CA_CHAR_LIST.item_at: method(index: number) --> CA_CHAR
