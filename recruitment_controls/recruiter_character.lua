@@ -65,15 +65,7 @@ function RecruiterCharacter.IsQueueEmpty(self)
     return self.QueueEmpty
 end
 
---v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
-function RecruiterCharacter.AddToQueue(self, unit_component_ID)
-    table.insert(self.QueueTable, unit_component_ID)
-end
 
---v function(self: RECRUITER_CHARACTER, queue_component_ID: string)
-function RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)
-
-end
 
 
 
@@ -126,9 +118,42 @@ function RecruiterCharacter.SetCounts(self)
     end
 end
 
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string) --> number
+function RecruiterCharacter.GetTotalCountForUnit(self, unit_component_ID)
+    return self.TotalCount[unit_component_ID]
+end
 
 
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
+function RecruiterCharacter.AddToQueue(self, unit_component_ID)
+    table.insert(self.QueueTable, unit_component_ID)
+    self:SetCounts()
+end
 
+--v function(self: RECRUITER_CHARACTER, queue_component_ID: string)
+function RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)
+    RCLOG("Removing ["..queue_component_ID.."] from the queue for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)")
+    local queue_string = string.gsub(queue_component_ID, "QueuedLandUnit ", "")
+    queueID = tonumber(queue_string) + 1;
+    --# assume queueID: integer
+    RCLOG("queue_component_ID is ["..queue_component_ID.."], while ["..tostring(queueID).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)")
+    table.remove(self.QueueTable, queueID)
+    self:SetCounts()
+end
+
+--v function (self: RECRUITER_CHARACTER, unit_component_ID:string, restrict: boolean)
+function RecruiterCharacter.SetRestriction(self, unit_component_ID, restrict)
+    self.CurrentRestrictions[unit_component_ID] = restrict
+end
+
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
+function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)
+    if self.CurrentRestrictions[unit_component_ID] == true then
+        RCLOG("Locking Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+    else
+        RCLOG("Unlocking! Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+    end
+end
 
 
 
