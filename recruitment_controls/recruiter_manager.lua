@@ -91,3 +91,25 @@ function RecruiterManager.CreateCharacter(self, cqi)
     self.Characters[cqi] = character
     character:SetManager(self)
 end
+
+--v function(self: RECRUITER_MANAGER) --> map<CA_CQI, vector<string>>
+function RecruiterManager.Save(self)
+    local save_table = {} --:map<CA_CQI, vector<string>>
+    for k, v in pairs(self.Characters) do
+        if v:IsQueueEmpty() == false then
+            cqi, queuetable = v:Save()
+            save_table[cqi] = queuetable
+        end
+    end
+
+    return save_table
+end
+
+--v function(self: RECRUITER_MANAGER, save_table: map<CA_CQI, vector<string>>)
+function RecruiterManager.Load(self, save_table)
+    for k, v in pairs(save_table) do
+        local character = rc.Load(k, v)
+        self.Characters[cqi] = character
+        character:SetManager(self)
+    end
+end
