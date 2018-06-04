@@ -117,6 +117,8 @@ function llr_lord.new(subtype, forename, surname, originating_faction)
     self.forename = forename
     self.surname = surname
     self.faction = originating_faction
+
+
  
     --these add the args we gave as the fields/properties of the object. 
     self.has_quest_set = false --:boolean
@@ -228,7 +230,12 @@ function llr_lord.survived_confederation(self, faction)
 end
 
 
-
+--v function(self: LLR_LORD, faction: string)
+function llr_lord.transfer_ownership(self, faction)
+    LLRLOG("Transfering Ownership of lord with subtype ["..self.subtype.."] to ["..faction.."]")
+    self.faction = faction
+    cm:set_saved_value("llr_lord"..self.subtype.."_"..self.forename.."_faction_override", faction)
+end
 
 
 
@@ -507,7 +514,6 @@ end
 
 
 
-
 --unlike the other methods we've looked at, which were basically functional or accessors, this one is a "mutator", or a "setter"
 --it adds or edits information in the model.
 --v function(self: LLR_MANAGER, lord: LLR_LORD)
@@ -521,10 +527,16 @@ function llr_manager.add_lord(self, lord)
         WEC_ERROR("method #llr_manager.add_lord(self, lord)# called but the supplied lord is not a LLR_LORD object!")
     end
 
+    if is_string(cm:get_saved_value("llr_lord"..lord.subtype.."_"..lord.forename.."_faction_override")) then
+        lord.faction = cm:get_saved_value("llr_lord"..lord.subtype.."_"..lord.forename.."_faction_override")
+        LLRLOG("Faction override for new lord found, overriding faction is ["..lord.faction.."] ")
+    end
+
 
     
     --first of all, we want to get the faction associated with the lord object we've been given. 
     local faction = lord:get_faction()
+    
 
     --next, we want to prevent duplicate custom lords being added.
     LLRLOG("Adding a lord to manager! Lord forced ["..tostring(lord:forced()).."]; New faction ["..tostring(self.lords[faction] == nil).."] ");
@@ -631,6 +643,29 @@ function llr_manager.remove_lord(self, subtype, faction)
 end
 
 
+
+--v function(self: LLR_MANAGER, lord: LLR_LORD, faction: string)
+function llr_manager.transfer_lord_ownership(self, lord, faction)
+
+    local cached_faction = lord.faction
+    local subtype = lord.subtype
+    LLRLOG("Transfering ownership of ["..subtype.."] from ["..cached_faction.."] to ["..faction.."] ")
+    if self.lords[faction] == nil then
+        self.lords[faction] = {} 
+    end
+
+
+    lord:transfer_ownership(faction)
+    local faction_index = self.lords[faction]
+    table.insert(self.lords[faction], lord)
+
+    self:remove_lord(subtype, cached_faction)
+end
+    
+
+
+
+
 --v function(self: LLR_MANAGER)
 function llr_manager.activate(self)
     --time to tell our manager to actually do stuff!
@@ -654,22 +689,29 @@ function llr_manager.activate(self)
             local confederation_name = context:confederation():name(); --the (player?) faction doing the eating.
 
             for k, v in pairs(self.lords) do
-              if k == faction_name then --we only want lords who are from the faction being confederated
-                for i = 1, #v do
-                    local character = v[i]:survived_confederation(confederation_name)
-                    if character then --if they have survived the confederation (IE they are alive on the map)
-                        if not character:is_wounded() then
-                            v[i]:respec_char_with_army(confederation_name, character) --we use the respec method we defined earlier.
-                        else
-                            LLRLOG("Char is wounded!")
-                            v[i]:respec_wounded_lord(confederation_name, character)
+                if k == faction_name then --we only want lords who are from the faction being confederated
+                    if cm:get_faction(confederation_name):is_human() then
+                        for i = 1, #v do
+                            local character = v[i]:survived_confederation(confederation_name)
+                            if character then --if they have survived the confederation (IE they are alive on the map)
+                                if not character:is_wounded() then
+                                    v[i]:respec_char_with_army(confederation_name, character) --we use the respec method we defined earlier.
+                                else
+                                    LLRLOG("Char is wounded!")
+                                    v[i]:respec_wounded_lord(confederation_name, character)
+                                end
+                            else --otherwise, if we can't find them on the map
+                                v[i]:respawn_to_pool(confederation_name) -- we give them to our confederator.
+                            end
                         end
-                    else --otherwise, if we can't find them on the map
-                        v[i]:respawn_to_pool(confederation_name) -- we give them to our confederator.
+                    else --if the confederator isn't human they don't need to respec!
+                        for i = 1, #v do
+                            self:transfer_lord_ownership(v[i], confederation_name) --but we will transfer their ownership.
+                        end
                     end
                 end
-              end
             end
+
         end,
         true); --we want this listener to trigger as many times as necessary.
 
@@ -917,6 +959,7 @@ local vanilla_lords = {
 
 }--:vector<{faction: string, forename: string, surname: string, subtype: string, quests: vector<string>}>
 
+
 for i = 1, #vanilla_lords do --start looping through the information we just defined.
   local clord = vanilla_lords[i] --makes the rest shorter and easier to type.
   local fact = clord.faction 
@@ -933,7 +976,6 @@ for i = 1, #vanilla_lords do --start looping through the information we just def
 end
     LLRLOG("Triggering the Vanilla Lords Added Event")
     core:trigger_event("LegendaryLordVanillaLordsAdded")
-
 end
 
 --THE FUCKING END
