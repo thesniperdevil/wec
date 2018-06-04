@@ -159,4 +159,64 @@ function RecruiterManager.GetCurrentlySelectedCharacter(self)
     return self.CurrentlySelectedCharacter
 end
 
+--v function(self: RECRUITER_MANAGER)
+function RecruiterManager.EvaluateAllRestrictions(self)
+
+
+end
+
+--v function(self: RECRUITER_MANAGER, unit_component_ID: string)
+function RecruiterManager.EvaluateSingleUnitRestriction(self, unit_component_ID)
+
+
+end
+
+
+---Events
+
+
+--v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
+function RecruiterManager.OnCharacterFinishedMoving(self, cqi)
+
+end
+
+--v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
+function RecruiterManager.OnCharacterSelected(self, cqi)
+
+end
+
+--v function(self: RECRUITER_MANAGER)
+function RecruiterManager.OnRecruitmentPanelOpened(self)
+
+
+end
+
+--v function(self: RECRUITER_MANAGER, context: CA_UIContext)
+function RecruiterManager.OnQueuedUnitClicked(self, context)
+
+end
+
+--v function(self: RECRUITER_MANAGER, context: CA_UIContext)
+function RecruiterManager.OnRecruitableUnitClicked(self, context)
+
+end
+
+
+
+--listeners.
+
+--v function(self: RECRUITER_MANAGER)
+function RecruiterManager.Listen(self)
+
+
+
+
+
+
+
+end
+
+
+
+
 
