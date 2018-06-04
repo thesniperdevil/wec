@@ -14,10 +14,8 @@ function RecruiterCharacter.Create(cqi)
     self.QueueTable = {} --:vector<string>
     self.CurrentRestrictions = {} --:map<string, boolean>
     self.QueueEmpty = true --:boolean
-    self.QueueCount = 0 --:number
     self.CurrentArmy = {} --:vector<string>
-    self.ArmyCount = 0 --:number
-    self.TotalCount = 0 --:number
+    self.TotalCount = {} --:map<string, number>
     self.RegionKey = "" --:string
 
     RCLOG("Created a RECRUITER_CHARACTER at CQI ["..tostring(cqi).."] ", "RecruiterCharacter.Create(cqi)")
@@ -38,10 +36,8 @@ function RecruiterCharacter.Load(cqi, queuetable)
     self.QueueTable = queuetable
     self.CurrentRestrictions = {} 
     self.QueueEmpty = false
-    self.QueueCount = 0
     self.CurrentArmy = {} 
-    self.ArmyCount = 0 
-    self.TotalCount = 0 
+    self.TotalCount = {} 
     self.RegionKey = "" 
 
     RCLOG("Loaded a RECRUITER_CHARACTER at CQI ["..tostring(cqi).."] ", "RecruiterCharacter.Load(cqi, queuetable)")
@@ -103,8 +99,35 @@ end
 
 --v function(self: RECRUITER_CHARACTER)
 function RecruiterCharacter.EvaluateArmy(self)
-    local army = cm:get_character_by_cqi(self.cqi):military_force()
+    RCLOG("Evaluating Army for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.EvaluateArmy(self)")
+    local army = cm:get_character_by_cqi(self.cqi):military_force():unit_list()
+    self.CurrentArmy = {}
+    for i = 0, army:num_items() do
+        local current_unit = army:item_at(i):unit_key()
+        local final_key = current_unit.."_recruitable"
+        table.insert(self.CurrentArmy, final_key)
+    end
+
 end
+
+--v function(self: RECRUITER_CHARACTER)
+function RecruiterCharacter.SetCounts(self)
+
+    self.TotalCount = {}
+    for i = 1, #self.QueueTable do
+        local current_unit = self.QueueTable[i]
+        if self.TotalCount[current_unit] == nil then self.TotalCount[current_unit] = 0 end
+        self.TotalCount[current_unit] = self.TotalCount[current_unit] + 1;
+    end
+    for i = 1, #self.CurrentArmy do
+        local current_unit = self.CurrentArmy[i]
+        if self.TotalCount[current_unit] == nil then self.TotalCount[current_unit] = 0 end
+        self.TotalCount[current_unit] = self.TotalCount[current_unit] + 1;
+    end
+end
+
+
+
 
 
 
