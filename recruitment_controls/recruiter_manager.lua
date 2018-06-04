@@ -87,6 +87,11 @@ end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.CreateCharacter(self, cqi)
+    if not cm:get_character_by_cqi(cqi):has_military_force() then
+        RCLOG("Selected  ["..tostring(cqi).."] does not have a military force, aborting ", "RecruiterManager.CreateCharacter(self, cqi)")
+        return
+    end
+    RCLOG("Model calling for a new character with CQI ["..tostring(cqi).."]", "RecruiterManager.CreateCharacter(self, cqi)")
     local character = rc.Create(cqi)
     self.Characters[cqi] = character
     character:SetManager(self)
