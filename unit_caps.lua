@@ -39,21 +39,23 @@ Methods:
   
 ----------------------------------------------------
 
-RecruitmentManager: RECRUITER_MANAGER: stores all characters and all information about restrictions.
+RecruiterManager: RECRUITER_MANAGER: stores all characters and all information about restrictions.
 ----------------------------------------------------
 Fields:
     "Characters": map<CA_CQI, RECRUITER_CHARACTER>: stores the recruiter character objects at a given CQI.
     "CurrentlySelectedCharacter": RECRUITER_CHARACTER : stores the currently selected character object.
-    "Region Restrictions": map<REGION_KEY: string, map<unit_UI_ID, boolean>
-    "Unit Quantity Restrictions": map<unit_UI_ID, number> : stores the quantity of each unit allowed in each army.
+    "RegionRestrictions": map<REGION_KEY: string, map<unit_UI_ID, boolean>
+    "UnitQuantityRestrictions": map<unit_UI_ID, number> : stores the quantity of each unit allowed in each army.
 ----------------------------------------------------
 Methods:
+    "Init" : public : () : Create the model
     "AddRegionRestriction": public: (unit_key: string, region: string) : sets a region restriction for a unit key.
     "RemoveRegionRestriction": public: (unit_key: string, region: string) : sets a region restriction for a unit key.
     "GetIsRegionRestricted":  public: (unit_key: string, region: string) --> boolean : Returns whether the passed unit is restricted in the passed region.
     "SetUnitQuantityRestriction": public: (unit_key: string, count: number) : sets a unit quantity restriction for a unit key.
     "RemoveUnitQuantityRestriction" : public: (unit_key: string) : removes the UnitQuantityRestriction for the passed unit.
     "GetUnitQuantityRestriction" : public: (unit_key: string) --> : returns number of units allowed.
+    "Create" : Private : (cqi: CA_CQI) : Creates a new RECRUITER_CHARACTER, and associates it to the manager.
     "SetCurrentlySelectedCharacter": private: (cqi: CA_CQI) : sets the CurrentlySelectedCharacter field.
     "EvaluateAllRestrictions": private: () : 
         Loops through the present unit cards; for each:
@@ -136,3 +138,5 @@ On CharacterMoved
 ----------------------------------------------------
 
 ]]
+
+local recruit_manager = require("recruitment_controls/recruiter_manager")
