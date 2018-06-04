@@ -177,7 +177,20 @@ end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.OnCharacterFinishedMoving(self, cqi)
+    if self.Characters[cqi]:IsQueueEmpty() == false then
+        self.Characters[cqi]:EmptyQueue()
+        RCLOG("Character with cqi ["..tostring(cqi).."] moved, but had units in Queue. Wiping his units!", "RecruiterManager.OnCharacterFinishedMoving(self, cqi)")
+    end
+end
 
+--v function(self: RECRUITER_MANAGER, context: WHATEVER)
+function RecruiterManager.OnUnitTrained(self, context)
+    local unit = context:unit()
+    --# assume unit: CA_UNIT
+    local char_cqi = unit:force_commander():command_queue_index();
+    local unit_key = unit:unit_key();
+    RCLOG("Recruitment Completed for unit ["..unit_key.."] by character ["..tostring(char_cqi).."]", "RecruiterManager.OnUnitTrained(self, context)")
+    self.Characters[char_cqi]:RemoveFromQueue(unit_key)
 end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
