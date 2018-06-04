@@ -118,3 +118,45 @@ function RecruiterManager.Load(self, save_table)
         character:SetManager(self)
     end
 end
+
+--v function(self: RECRUITER_MANAGER, unit_key: string, region_key: string)
+function RecruiterManager.AddRegionRestrictionToUnit(self, unit_key, region_key)
+    self.RegionRestrictions[region_key][unit_key] = true
+end
+
+--v function(self: RECRUITER_MANAGER, unit_key: string, region_key: string)
+function RecruiterManager.RemoveRegionRestriction(self, unit_key, region_key)
+    self.RegionRestrictions[region_key][unit_key] = false
+end
+
+--v function(self: RECRUITER_MANAGER, unit_key: string, region_key: string) --> boolean
+function RecruiterManager.GetIsRegionRestricted(self, unit_key, region_key)
+    return self.RegionRestrictions[region_key][unit_key]
+end
+
+--v function(self: RECRUITER_MANAGER, unit_key: string, count: number) 
+function RecruiterManager.SetUnitQuantityRestriction(self, unit_key, count)
+    self.UnitQuantityRestrictions[unit_key] = count
+end
+
+--v function(self: RECRUITER_MANAGER, unit_key: string)
+function RecruiterManager.RemoveUnitQuantityRestriction(self, unit_key)
+    self.UnitQuantityRestrictions[unit_key] = nil
+end
+
+--v function(self: RECRUITER_MANAGER, unit_key: string) --> number
+function RecruiterManager.GetUnitQuantityRestriction(self, unit_key)
+    return self.UnitQuantityRestrictions[unit_key]
+end
+
+--v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
+function RecruiterManager.SetCurrentlySelectedCharacter(self, cqi)
+    self.CurrentlySelectedCharacter = self.Characters[cqi]
+end
+
+--v function(self: RECRUITER_MANAGER) --> RECRUITER_CHARACTER
+function RecruiterManager.GetCurrentlySelectedCharacter(self)
+    return self.CurrentlySelectedCharacter
+end
+
+
