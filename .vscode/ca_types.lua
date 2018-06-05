@@ -342,7 +342,7 @@
 --# assume CORE.add_listener: method(
 --#     listenerName: string,
 --#     eventName: string,
---#     conditionFunc: function(context: WHATEVER?) --> boolean,
+--#     conditionFunc: (function(context: WHATEVER?) --> boolean) | boolean,
 --#     listenerFunc: function(context: WHATEVER?),
 --#     persistent: boolean
 --# )
