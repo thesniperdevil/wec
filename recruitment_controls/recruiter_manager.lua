@@ -169,13 +169,14 @@ end
 --v function(self: RECRUITER_MANAGER)
 function RecruiterManager.EvaluateAllRestrictions(self)
 
-
 end
 
 --v function(self: RECRUITER_MANAGER, unit_component_ID: string)
 function RecruiterManager.EvaluateSingleUnitRestriction(self, unit_component_ID)
-
-
+    local character = self:GetCurrentlySelectedCharacter()
+    local region = character:GetRegion()
+    local count = character:GetTotalCountForUnit(unit_component_ID)
+    character:SetRestriction(unit_component_ID, (self.RegionRestrictions[region][unit_component_ID] or (count > self.UnitQuantityRestrictions[unit_component_ID]) ))
 end
 
 
