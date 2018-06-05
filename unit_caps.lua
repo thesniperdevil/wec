@@ -27,10 +27,9 @@ Methods:
     -"IsQueueEmpty": private: () --> boolean : returns the QueueEmpty Boolean.
     -"SetRegion" : private: (): sets the RegionKey field
     -"GetRegion" : private: () --> string: gets the RegionKey field
-    "GetTotalCountForUnit": private(unit_component_ID: string) --> number: returns the TotalCount for a specific unit.
-    "GetRegionKey": private () --> string: returns the RegionKey field.
-    "SetManager": private: (manager: RECRUITER_MANAGER): gives the object access to its manager.
-    "SetRestriction" : private : (unit_component_ID: string, restrict: boolean) : Sets the restriction for that unit to the boolean value.
+    --"GetTotalCountForUnit": private(unit_component_ID: string) --> number: returns the TotalCount for a specific unit.
+    --"SetManager": private: (manager: RECRUITER_MANAGER): gives the object access to its manager.
+    -"SetRestriction" : private : (unit_component_ID: string, restrict: boolean) : Sets the restriction for that unit to the boolean value.
     "ApplyRestrictionToUnit": private : (unit_component_ID: string) : Applies the restrictions to the UI.
   
 ----------------------------------------------------
@@ -44,15 +43,15 @@ Fields:
     "UnitQuantityRestrictions": map<unit_UI_ID, number> : stores the quantity of each unit allowed in each army.
 ----------------------------------------------------
 Methods:
-    "Init" : public : () : Create the model
-    "AddRegionRestriction": public: (unit_key: string, region: string) : sets a region restriction for a unit key.
-    "RemoveRegionRestriction": public: (unit_key: string, region: string) : sets a region restriction for a unit key.
-    "GetIsRegionRestricted":  public: (unit_key: string, region: string) --> boolean : Returns whether the passed unit is restricted in the passed region.
-    "SetUnitQuantityRestriction": public: (unit_key: string, count: number) : sets a unit quantity restriction for a unit key.
-    "RemoveUnitQuantityRestriction" : public: (unit_key: string) : removes the UnitQuantityRestriction for the passed unit.
-    "GetUnitQuantityRestriction" : public: (unit_key: string) --> : returns number of units allowed.
-    "Create" : Private : (cqi: CA_CQI) : Creates a new RECRUITER_CHARACTER, and associates it to the manager.
-    "SetCurrentlySelectedCharacter": private: (cqi: CA_CQI) : sets the CurrentlySelectedCharacter field.
+    -"Init" : public : () : Create the model
+   - "AddRegionRestrictionToUnit": public: (unit_key: string, region: string) : sets a region restriction for a unit key.
+    -"RemoveRegionRestriction": public: (unit_key: string, region: string) : sets a region restriction for a unit key.
+    -"GetIsRegionRestricted":  public: (unit_key: string, region: string) --> boolean : Returns whether the passed unit is restricted in the passed region.
+    -"SetUnitQuantityRestriction": public: (unit_key: string, count: number) : sets a unit quantity restriction for a unit key.
+    -"RemoveUnitQuantityRestriction" : public: (unit_key: string) : removes the UnitQuantityRestriction for the passed unit.
+    -"GetUnitQuantityRestriction" : public: (unit_key: string) --> : returns number of units allowed.
+    -"CreateCharacter" : Private : (cqi: CA_CQI) : Creates a new RECRUITER_CHARACTER, and associates it to the manager.
+   - "SetCurrentlySelectedCharacter": private: (cqi: CA_CQI) : sets the CurrentlySelectedCharacter field.
     "EvaluateAllRestrictions": private: () : 
         Loops through the present unit cards; for each:
             Calls GetRegion(), uses it to call GetIsRegionRestricted()
@@ -72,16 +71,15 @@ Methods:
             Calls EvaluateArmy()
             Calls SetCounts()
             Calls SetRegion()
-            Calls EvaluateAllRestrictions()
     ----------------------------------------------------
     "OnCharacterFinishedMoving": private: (context: CA_CONTEXT) :
         If a RECRUITER_CHARACTER does not exist for the character context, calls Create()
             If IsQueueEmpty returns false, calls EmptyQueue()
     ----------------------------------------------------
-    "Save": private : () --> map<CA_CQI, vector<unit_component_ID: string>> :
+   - "Save": private : () --> map<CA_CQI, vector<unit_component_ID: string>> :
         for each value in the Characters field, call Save() and add the results to a save table, then return the save table.
     ----------------------------------------------------
-    "Load": private : (map<CA_CQI, vector<unit_component_ID: string>>) :
+    -"Load": private : (map<CA_CQI, vector<unit_component_ID: string>>) :
         for each pair of CQI and QueueTable call CHARACTER_RECRUITER.Load()
     ----------------------------------------------------
 ----------------------------------------------------

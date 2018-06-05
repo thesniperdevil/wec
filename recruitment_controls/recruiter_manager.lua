@@ -63,7 +63,7 @@ end;
 
 local rc = require("recruitment_controls/recruiter_character")
 
-local RecruiterManager = {} --# assume rm: RECRUITER_MANAGER
+local RecruiterManager = {} --# assume RecruiterManager: RECRUITER_MANAGER
 
 --v function() --> RECRUITER_MANAGER
 function RecruiterManager.Init()
@@ -121,36 +121,43 @@ end
 
 --v function(self: RECRUITER_MANAGER, unit_key: string, region_key: string)
 function RecruiterManager.AddRegionRestrictionToUnit(self, unit_key, region_key)
+    RCLOG("Region Restriction set for unit ["..unit_key.."] and region ["..region_key.."]", "RecruiterManager.AddRegionRestrictionToUnit(self, unit_key, region_key)")
     self.RegionRestrictions[region_key][unit_key] = true
 end
 
 --v function(self: RECRUITER_MANAGER, unit_key: string, region_key: string)
 function RecruiterManager.RemoveRegionRestriction(self, unit_key, region_key)
+    RCLOG("Region Restriction removed for unit ["..unit_key.."] and region ["..region_key.."]", "RecruiterManager.RemoveRegionRestriction(self, unit_key, region_key)")
     self.RegionRestrictions[region_key][unit_key] = false
 end
 
 --v function(self: RECRUITER_MANAGER, unit_key: string, region_key: string) --> boolean
 function RecruiterManager.GetIsRegionRestricted(self, unit_key, region_key)
+    RCLOG("Region Restriction for unit ["..unit_key.."] and region ["..region_key.."] is ["..tostring(self.RegionRestrictions[region_key][unit_key]).."] ", "RecruiterManager.GetIsRegionRestricted(self, unit_key, region_key)")
     return self.RegionRestrictions[region_key][unit_key]
 end
 
 --v function(self: RECRUITER_MANAGER, unit_key: string, count: number) 
 function RecruiterManager.SetUnitQuantityRestriction(self, unit_key, count)
+    RCLOG("Set a unit restriction for unit ["..unit_key.."] and quantity ["..tostring(count).."]","RecruiterManager.SetUnitQuantityRestriction(self, unit_key, count)")
     self.UnitQuantityRestrictions[unit_key] = count
 end
 
 --v function(self: RECRUITER_MANAGER, unit_key: string)
 function RecruiterManager.RemoveUnitQuantityRestriction(self, unit_key)
+    RCLOG("removed a unit restriction for unit ["..unit_key.."]","RecruiterManager.RemoveUnitQuantityRestriction(self, unit_key)")
     self.UnitQuantityRestrictions[unit_key] = nil
 end
 
 --v function(self: RECRUITER_MANAGER, unit_key: string) --> number
 function RecruiterManager.GetUnitQuantityRestriction(self, unit_key)
+    RCLOG("unit restriction for unit ["..unit_key.."] is quantity ["..tostring(self.UnitQuantityRestrictions[unit_key]).."]","RecruiterManager.GetUnitQuantityRestriction(self, unit_key)")
     return self.UnitQuantityRestrictions[unit_key]
 end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.SetCurrentlySelectedCharacter(self, cqi)
+    RCLOG("Set the CurrentlySelectedCharacter to ["..tostring(cqi).."]", "RecruiterManager.SetCurrentlySelectedCharacter(self, cqi)")
     self.CurrentlySelectedCharacter = self.Characters[cqi]
 end
 
@@ -190,28 +197,40 @@ function RecruiterManager.OnUnitTrained(self, context)
     local char_cqi = unit:force_commander():command_queue_index();
     local unit_key = unit:unit_key();
     RCLOG("Recruitment Completed for unit ["..unit_key.."] by character ["..tostring(char_cqi).."]", "RecruiterManager.OnUnitTrained(self, context)")
-    self.Characters[char_cqi]:RemoveFromQueue(unit_key)
+    self.Characters[char_cqi]:RemoveUnitFromQueue(unit_key.."_recruitable")
 end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.OnCharacterSelected(self, cqi)
-
+    RCLOG("Selected Character with CQI ["..tostring(cqi).."] ", "RecruiterManager.OnCharacterSelected(self, cqi)")
+    if self.Characters[cqi] == nil then
+        self:CreateCharacter(cqi)
+    end
+    if not self.Characters[cqi] == self.CurrentlySelectedCharacter then
+        self:SetCurrentlySelectedCharacter(cqi)
+        local character = self:GetCurrentlySelectedCharacter()
+        character:EvaluateArmy()
+        character:SetCounts()
+        character:SetRegion()
+    end
 end
 
 --v function(self: RECRUITER_MANAGER)
 function RecruiterManager.OnRecruitmentPanelOpened(self)
-
-
+    self:EvaluateAllRestrictions()
 end
 
 --v function(self: RECRUITER_MANAGER, context: CA_UIContext)
 function RecruiterManager.OnQueuedUnitClicked(self, context)
-
+    local unit = self:GetCurrentlySelectedCharacter():RemoveFromQueueAndReturnUnit(tostring(context.string))
+    self:EvaluateSingleUnitRestriction(unit)
 end
 
 --v function(self: RECRUITER_MANAGER, context: CA_UIContext)
 function RecruiterManager.OnRecruitableUnitClicked(self, context)
-
+    local unit = tostring(context.string)
+    self:GetCurrentlySelectedCharacter():AddToQueue(unit)
+    self:EvaluateSingleUnitRestriction(unit)
 end
 
 

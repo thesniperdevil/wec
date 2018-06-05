@@ -130,16 +130,31 @@ function RecruiterCharacter.AddToQueue(self, unit_component_ID)
     self:SetCounts()
 end
 
---v function(self: RECRUITER_CHARACTER, queue_component_ID: string)
-function RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
+function RecruiterCharacter.RemoveUnitFromQueue(self, unit_component_ID)
+    RCLOG("Removing ["..unit_component_ID.."] from the queue for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.RemoveFromQueue(self, unit_component_ID)")
+    for i = 1, #self.QueueTable do
+        if self.QueueTable[i] == unit_component_ID then
+            RCLOG("unit_component_ID is ["..unit_component_ID.."], while ["..tostring(i).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, unit_component_ID)")
+            table.remove(self.QueueTable, i)
+        end
+    end
+    self:SetCounts()
+end
+
+--v function(self: RECRUITER_CHARACTER, queue_component_ID: string) --> string
+function RecruiterCharacter.RemoveFromQueueAndReturnUnit(self, queue_component_ID)
     RCLOG("Removing ["..queue_component_ID.."] from the queue for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)")
     local queue_string = string.gsub(queue_component_ID, "QueuedLandUnit ", "")
     queueID = tonumber(queue_string) + 1;
     --# assume queueID: integer
     RCLOG("queue_component_ID is ["..queue_component_ID.."], while ["..tostring(queueID).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)")
+    local cached_unit = self.QueueTable[queueID]
     table.remove(self.QueueTable, queueID)
     self:SetCounts()
+    return cached_unit
 end
+
 
 --v function (self: RECRUITER_CHARACTER, unit_component_ID:string, restrict: boolean)
 function RecruiterCharacter.SetRestriction(self, unit_component_ID, restrict)
