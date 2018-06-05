@@ -337,4 +337,3 @@ cm:add_loading_game_callback(
     end
 )
 
-RecruiterManager:OnCharacterSelected()
