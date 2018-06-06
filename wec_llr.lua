@@ -140,9 +140,37 @@ end
 --this particular method is usually called an accessor or a getter, because it accesses or gets information about the object.
 
 --v function(self: LLR_LORD) --> string
-  function llr_lord.get_faction(self)
-      return self.faction;
-  end
+function llr_lord.get_faction(self)
+    return self.faction;
+end
+
+--v function(self: LLR_LORD, faction: string)
+function llr_lord.set_faction(self, faction)
+    self.faction = faction
+end
+
+--v function(self: LLR_LORD, subtype: string)
+function llr_lord.set_subtype(self, subtype)
+    self.subtype = subtype
+end
+
+--v function(self: LLR_LORD, name: string)
+function llr_lord.set_forename(self, name)
+    self.forename = name
+end
+
+--v function(self: LLR_LORD, name: string)
+function llr_lord.set_surname(self, name)
+    self.surname = name
+end
+
+
+
+
+
+
+
+
 
 --another one. This one checks if a lord has a given originating faction.
 --v function(self: LLR_LORD, faction: string) --> boolean
