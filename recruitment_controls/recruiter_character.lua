@@ -161,8 +161,10 @@ function RecruiterCharacter.SetRestriction(self, unit_component_ID, restrict)
     self.CurrentRestrictions[unit_component_ID] = restrict
 end
 
---v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
-function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string, component: CA_UIC)
+function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID, component)
+
+
     if self.CurrentRestrictions[unit_component_ID] == true then
         RCLOG("Locking Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
     else
