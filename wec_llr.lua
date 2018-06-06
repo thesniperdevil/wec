@@ -144,10 +144,6 @@ function llr_lord.get_faction(self)
     return self.faction;
 end
 
---v function(self: LLR_LORD, faction: string)
-function llr_lord.set_faction(self, faction)
-    self.faction = faction
-end
 
 --v function(self: LLR_LORD, subtype: string)
 function llr_lord.set_subtype(self, subtype)
