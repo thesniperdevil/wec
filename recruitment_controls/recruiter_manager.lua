@@ -65,7 +65,7 @@ local rc = require("recruitment_controls/recruiter_character")
 
 local RecruiterManager = {} --# assume RecruiterManager: RECRUITER_MANAGER
 
---v function() --> RECRUITER_MANAGER
+--v function()
 function RecruiterManager.Init()
     local self = {}
     setmetatable(self, {
@@ -82,7 +82,6 @@ function RecruiterManager.Init()
 
     RCLOG("Init Complete, adding the manager to the Gamespace!", "RecruiterManager.Init()")
     _G.rm = self
-    return self
 end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
@@ -185,6 +184,10 @@ end
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.OnCharacterFinishedMoving(self, cqi)
+    if not self.Characters[cqi] then
+        RCLOG("Character with cqi ["..tostring(cqi).."] moved but is not contained in the model", "OnCharacterFinishedMoving(self, cqi)")
+        return
+    end
     if self.Characters[cqi]:IsQueueEmpty() == false then
         self.Characters[cqi]:EmptyQueue()
         RCLOG("Character with cqi ["..tostring(cqi).."] moved, but had units in Queue. Wiping his units!", "RecruiterManager.OnCharacterFinishedMoving(self, cqi)")
@@ -223,13 +226,13 @@ end
 
 --v function(self: RECRUITER_MANAGER, context: CA_UIContext)
 function RecruiterManager.OnQueuedUnitClicked(self, context)
-    local unit = self:GetCurrentlySelectedCharacter():RemoveFromQueueAndReturnUnit(tostring(context.string))
+    local unit = self:GetCurrentlySelectedCharacter():RemoveFromQueueAndReturnUnit(tostring(UIComponent(context.component):Id()))
     self:EvaluateSingleUnitRestriction(unit)
 end
 
 --v function(self: RECRUITER_MANAGER, context: CA_UIContext)
 function RecruiterManager.OnRecruitableUnitClicked(self, context)
-    local unit = tostring(context.string)
+    local unit = tostring(UIComponent(context.component):Id())
     self:GetCurrentlySelectedCharacter():AddToQueue(unit)
     self:EvaluateSingleUnitRestriction(unit)
 end
@@ -241,15 +244,96 @@ end
 --v function(self: RECRUITER_MANAGER)
 function RecruiterManager.Listen(self)
 
+    core:add_listener(
+        "RecruiterManagerOnRecruitOptionClicked",
+        "ComponentLClickUp",
+        true,
+        function(context)
+            --# assume context: CA_UIContext
+            local unit_component_ID = tostring(UIComponent(context.component):Id())
+            if string.find(unit_component_ID, "_recruitable") then
+                RCLOG("Locking recruitment button for ["..unit_component_ID.."] temporarily", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerOnRecruitOptionClicked");
+                self:OnRecruitableUnitClicked(context)
+            end
+        end,
+        true);
 
+    core:add_listener(
+        "RecruiterManagerOnQueuedUnitClicked",
+        "ComponentLClickUp",
+        true,
+        function(context)
+            --# assume context: CA_UIContext
+            local queue_component_ID = tostring(UIComponent(context.component):Id())
+            if string.find(queue_component_ID, "QueuedLandUnit") then
+                RCLOG("Component Clicked was a Queued Unit!", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerOnQueuedUnitClicked")
+                self:OnQueuedUnitClicked(context)
+            end
+        end,
+        true);
 
+    core:add_listener(
+        "RecruiterManagerPlayerCharacterMoved",
+        "CharacterFinishedMoving",
+        function(context)
+            return context:character():faction():is_human()
+        end,
+        function(context)
+            RCLOG("Player Character moved!", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerPlayerFactionRecruitedUnit")
+            local character = context:character()
+            --# assume character: CA_CHAR
+            self:OnCharacterFinishedMoving(character:command_queue_index())
+        end,
+        true)
 
+    core:add_listener(
+        "RecruiterManagerPlayerFactionRecruitedUnit",
+        "UnitTrained",
+        function(context)
+            return context:unit():faction():is_human()
+        end,
+        function(context)
+            RCLOG("Player faction recruited a unit!", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerPlayerFactionRecruitedUnit")
+            self:OnUnitTrained(context)
+        end,
+        true)
+
+    core:add_listener(
+        "RecruiterManagerOnCharacterSelected",
+        "CharacterSelected",
+        function(context)
+        return context:character():faction():is_human() and context:character():has_military_force()
+        end,
+        function(context)
+            RCLOG("Human Character Selected by player!", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerOnCharacterSelected")
+            local character = context:character()
+            --# assume character: CA_CHAR
+            self:OnCharacterSelected(character:command_queue_index())
+        end,
+        true)
 
 
 
 end
 
+cm:add_saving_game_callback(
+    function(context)
+        --# assume rm: RECRUITER_MANAGER
+        if rm then
+            local save_table = rm:Save()
+            cm:save_named_value("recruiter_manager", save_table, context)
+        end
+    end
+)
 
-
-
+cm:add_loading_game_callback(
+    function(context)
+        RecruiterManager.Init()
+        --# assume rm: RECRUITER_MANAGER
+        if not cm:is_new_game() then
+            load_table = cm:load_named_value("recruiter_manager", {}, context)
+            rm:Load(load_table)
+        end
+    end
+)
 
