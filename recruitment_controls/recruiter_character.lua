@@ -163,9 +163,6 @@ end
 
 --v function(self: RECRUITER_CHARACTER, unit_component_ID: string, component: CA_UIC)
 function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID, component)
-    local recruitmentList = find_uicomponent(core:get_ui_root(), 
-    "units_panel", "main_units_panel", "recruitment_docker", "recruitment_options", "recruitment_listbox",
-    "local1", "unit_list", "listview", "list_clip", "list_box")
 
 
     if self.CurrentRestrictions[unit_component_ID] == true then
