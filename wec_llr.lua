@@ -319,7 +319,11 @@ function llr_lord.respec_char_with_army(self, faction, character)
         --get the positioning of the army.
         self.x = character:logical_position_x()
         self.y = character:logical_position_y()
-        self.region = character:region():name()
+        if not character:region():is_null_interface() then --catch the lord being at sea!
+            self.region = character:region():name()
+        else
+            self.region = cm:get_faction(faction):home_region():name()
+        end
         --this one is actually risky, so we need to do a check!
         --if the lord happens to be in the chaos wastes then the spawn command will fail.
         --a quirk of the spawn command is that the spawn region has to have a settlement.
