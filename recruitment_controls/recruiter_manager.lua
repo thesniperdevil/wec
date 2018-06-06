@@ -167,7 +167,19 @@ end
 
 --v function(self: RECRUITER_MANAGER)
 function RecruiterManager.EvaluateAllRestrictions(self)
+    local character = self:GetCurrentlySelectedCharacter()
+    local region = character:GetRegion()
 
+    local recruitmentList = find_uicomponent(core:get_ui_root(), 
+    "units_panel", "main_units_panel", "recruitment_docker", "recruitment_options", "recruitment_listbox",
+    "local1", "unit_list", "listview", "list_clip", "list_box");
+    for i = 0, recruitmentList:ChildCount() - 1 do	
+        local recruitmentOption = UIComponent(recruitmentList:Find(i));
+        local unit_component_ID = recruitmentOption:Id()
+        local count = character:GetTotalCountForUnit(unit_component_ID)
+        character:SetRestriction(unit_component_ID, (self.RegionRestrictions[region][unit_component_ID] or (count > self.UnitQuantityRestrictions[unit_component_ID])))
+        character:ApplyRestrictionToUnit(unit_component_ID, recruitmentOption)
+    end
 end
 
 --v function(self: RECRUITER_MANAGER, unit_component_ID: string)
@@ -175,7 +187,11 @@ function RecruiterManager.EvaluateSingleUnitRestriction(self, unit_component_ID)
     local character = self:GetCurrentlySelectedCharacter()
     local region = character:GetRegion()
     local count = character:GetTotalCountForUnit(unit_component_ID)
-    character:SetRestriction(unit_component_ID, (self.RegionRestrictions[region][unit_component_ID] or (count > self.UnitQuantityRestrictions[unit_component_ID]) ))
+    local component = find_uicomponent(core:get_ui_root(), 
+    "units_panel", "main_units_panel", "recruitment_docker", "recruitment_options", "recruitment_listbox",
+    "local1", "unit_list", "listview", "list_clip", "list_box", unit_component_ID)
+    character:SetRestriction(unit_component_ID, (self.RegionRestrictions[region][unit_component_ID] or (count > self.UnitQuantityRestrictions[unit_component_ID])))
+    character:ApplyRestrictionToUnit(unit_component_ID, component)
 end
 
 
@@ -251,7 +267,8 @@ function RecruiterManager.Listen(self)
         function(context)
             --# assume context: CA_UIContext
             local unit_component_ID = tostring(UIComponent(context.component):Id())
-            if string.find(unit_component_ID, "_recruitable") then
+            if string.find(unit_component_ID, "_recruitable") and UIComponent(context.component):CurrentState() == "active" then
+                UIComponent(context.component):SetInteractive(false)
                 RCLOG("Locking recruitment button for ["..unit_component_ID.."] temporarily", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerOnRecruitOptionClicked");
                 self:OnRecruitableUnitClicked(context)
             end
