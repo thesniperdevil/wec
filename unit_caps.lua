@@ -1,5 +1,23 @@
 RECRUITMENT_CONTROLS_LOG = true --:boolean
 
+--[[
+
+TO DO:
+Save method for the region objects.
+System to more accurately remove trained units from Queue 
+]]
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- Vanish's Error Checking Wrappers.
 --Modified slightly for use with my custom log.
