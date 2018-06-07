@@ -12,3 +12,4 @@
 --# assume global class RECRUITER_MANAGER
 --# assume global class RECRUITER_CHARACTER
 --# assume global class RECRUITER_GROUP
+--# assume global class RECRUITER_REGION
