@@ -405,8 +405,8 @@ function RecruiterCharacter.GetTotalCountForUnit(self, unit_component_ID)
     return self.TotalCount[unit_component_ID];
 end
 
-
---v function(self: RECRUITER_CHARACTER, unit_component_ID: string, isGlobal: boolean)
+--kailua has an incorrect entry for table.insert when using a third arg, so I'm nochecking this.
+--v [NO_CHECK] function(self: RECRUITER_CHARACTER, unit_component_ID: string, isGlobal: boolean)
 function RecruiterCharacter.AddToQueue(self, unit_component_ID, isGlobal)
     RCLOG("Adding ["..unit_component_ID.."] to the queue of a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "function RecruiterCharacter.AddToQueue(self, unit_component_ID)")
     if isGlobal then
@@ -512,6 +512,100 @@ end
 
 
 
+local RecruiterGroup = {} --# assume RecruiterGroup: RECRUITER_GROUP
+
+--v function(name: string, unit_set: vector<string>, grouped_quantity_cap: number) --> RECRUITER_GROUP
+function RecruiterGroup.New(name, unit_set, grouped_quantity_cap)
+    local self = {}
+    setmetatable(self, {
+        __index = RecruiterGroup,
+        __tostring = function() return "RECRUITER_GROUP" end
+    })
+    --# assume self: RECRUITER_GROUP
+
+    self.Name = name
+    self.UnitSet = unit_set
+    self.GroupedQuantityCap = grouped_quantity_cap
+    self.MembershipRegistry = {} --: map<string, boolean>
+    self.Manager = nil --:RECRUITER_MANAGER
+
+    return self
+end
+
+--v function(self: RECRUITER_GROUP, manager: RECRUITER_MANAGER)
+function RecruiterGroup.Initialise(self, manager)
+    self.Manager = manager
+    for i = 1, #self.UnitSet do
+        if not string.find(self.UnitSet[i], "_recruitable") then
+            self.UnitSet[i] = self.UnitSet[i].."_recruitable"
+            RCLOG("Item in unit set lacked component name format, modified it to ["..self.UnitSet[i].."]", "function RecruiterGroup.Initialise(self, manager)")
+        end 
+        self.MembershipRegistry[self.UnitSet[i]] = true
+    end
+end
+
+--v function(self: RECRUITER_GROUP, unit_component_ID: string) --> boolean
+function RecruiterGroup.HasUnit(self, unit_component_ID)
+        return self.MembershipRegistry[unit_component_ID]
+end
+
+--v function(self: RECRUITER_GROUP) --> string
+function RecruiterGroup.GetName(self)
+    return self.Name
+end
+
+--v function(self: RECRUITER_GROUP) --> number
+function RecruiterGroup.GetGroupedQuantityCap(self)
+    return self.GroupedQuantityCap
+end
+
+--v function(self: RECRUITER_GROUP, character: RECRUITER_CHARACTER) --> number
+function RecruiterGroup.CountGroupForCharacter(self, character)
+    local count = 0 --: number
+    for i = 1, #self.UnitSet do
+        count = count + character:GetTotalCountForUnit(self.UnitSet[i])
+    end
+    return count
+end
+
+--v function(self: RECRUITER_GROUP, character: RECRUITER_CHARACTER) --> boolean
+function RecruiterGroup.ShouldRestrictGroup(self, character)
+    return not (self:CountGroupForCharacter(character) < self:GetGroupedQuantityCap())
+end
+
+
+
+--v function(self: RECRUITER_GROUP, character: RECRUITER_CHARACTER)
+function RecruiterGroup.SetRestrictionForGroup(self, character)
+    if self:CountGroupForCharacter(character) < self:GetGroupedQuantityCap() then
+        for i = 1, #self.UnitSet do
+            character:SetRestriction(self.UnitSet[i], false)
+        end
+    else
+        for i = 1, #self.UnitSet do
+            character:SetRestriction(self.UnitSet[i], true)
+        end
+    end
+end
+
+--v function(self: RECRUITER_GROUP, character: RECRUITER_CHARACTER)
+function RecruiterGroup.ApplyRestrictionForGroup(self, character)
+    for i = 1, #self.UnitSet do
+        character:ApplyRestrictionToUnit(self.UnitSet[i])
+    end
+end
+
+
+--v function(self: RECRUITER_GROUP, character: RECRUITER_CHARACTER)
+function RecruiterGroup.LimitAllInGroup(self, character)
+    for i = 1, #self.UnitSet do
+        character:SetRestriction(self.UnitSet[i], true)
+        character:ApplyRestrictionToUnit(self.UnitSet[i])
+    end
+end
+
+
+
 
 
 
@@ -532,6 +626,10 @@ function RecruiterManager.Init()
     self.RegionRestrictions = {} --:map<string, map<string, boolean>>
     self.UnitQuantityRestrictions = {} --:map<string, number>
 
+
+    --group management
+    self.UnitsToGroups = {} --:map<string, vector<RECRUITER_GROUP>>
+    self.Groups = {} --:map<string, RECRUITER_GROUP>
 
     RCLOG("Init Complete, adding the manager to the Gamespace!", "RecruiterManager.Init()")
     _G.rm = self
@@ -645,7 +743,41 @@ function RecruiterManager.GetUnitQuantityRestriction(self, unit_key)
     return self.UnitQuantityRestrictions[unit_key];
 end
 
+--v function(self: RECRUITER_MANAGER, name: string, unit_set: vector<string>, grouped_quantity_cap: number)
+function RecruiterManager.AddGroupedCapRestriction(self, name, unit_set, grouped_quantity_cap)
+    local group = RecruiterGroup.New(name, unit_set, grouped_quantity_cap)
+    for i = 1, #unit_set do
+        if self.UnitsToGroups[unit_set[i]] == nil then
+            self.UnitsToGroups[unit_set[i]] = {}
+        end
+        table.insert(self.UnitsToGroups[unit_set[i]], group)
+    end
+    self.Groups[name] = group
+    group:Initialise(self)
+end
 
+--v function(self: RECRUITER_MANAGER, name: string) --> RECRUITER_GROUP
+function RecruiterManager.GetGroupByKey(self, name)
+    if not self.Groups[name] then
+        RCERROR("GetGroupByKey could not find a group with that key!")
+    end
+    return self.Groups[name]
+end
+
+
+--v function(self: RECRUITER_MANAGER, unit_component_ID: string) --> boolean
+function RecruiterManager.UnitHasGroups(self, unit_component_ID)
+    return not not self.UnitsToGroups[unit_component_ID]
+end
+
+--v function(self: RECRUITER_MANAGER, unit_component_ID: string) --> vector<RECRUITER_GROUP>
+function RecruiterManager.GetAllGroupsForUnit(self, unit_component_ID)
+    if not self.UnitsToGroups[unit_component_ID] then
+        self.UnitsToGroups[unit_component_ID] = {}
+        RCERROR("GetAllGroups For Unit found 0 groups, use UnitHasGroups before calling this method!")
+    end
+    return self.UnitsToGroups[unit_component_ID]
+end
 
 
 --v function(self: RECRUITER_MANAGER)
@@ -678,6 +810,10 @@ function RecruiterManager.EvaluateAllRestrictions(self)
         character:SetRestriction(unit_component_ID, _should_restrict)
         character:ApplyRestrictionToUnit(unit_component_ID)
     end
+    for k, v in pairs(self.Groups) do
+        v:SetRestrictionForGroup(character)
+        v:ApplyRestrictionForGroup(character)
+    end
 end
 
 --v function(self: RECRUITER_MANAGER, unit_component_ID: string)
@@ -698,6 +834,19 @@ function RecruiterManager.EvaluateSingleUnitRestriction(self, unit_component_ID)
     end
     RCLOG("Sending ["..tostring(_should_restrict).."] to the SetRestriction Method", "RecruiterManager.EvaluateSingleUnitRestriction(self, unit_component_ID)")
     character:SetRestriction(unit_component_ID, _should_restrict)
+    if self:UnitHasGroups(unit_component_ID) then
+        local groups = self:GetAllGroupsForUnit(unit_component_ID)
+        for i = 1, #groups do
+            local group = groups[i]
+            if group:ShouldRestrictGroup(character) then
+                group:LimitAllInGroup(character)
+                RCLOG("Sending a lock group request for group ["..group:GetName().."]", "RecruiterManager.EvaluateSingleUnitRestriction(self, unit_component_ID)")
+                return
+            end
+        end
+    end
+
+
     character:ApplyRestrictionToUnit(unit_component_ID)
 end
 
