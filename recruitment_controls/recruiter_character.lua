@@ -167,8 +167,12 @@ function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID, comp
 
     if self.CurrentRestrictions[unit_component_ID] == true then
         RCLOG("Locking Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+        component:SetInteractive(false)
+        component:SetVisible(false)
     else
         RCLOG("Unlocking! Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+        component:SetInteractive(true)
+        component:SetVisible(true)
     end
 end
 
