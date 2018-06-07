@@ -363,7 +363,7 @@
 --# assume global find_uicomponent: function(parent: CA_UIC, string...) --> CA_UIC
 --# assume global UIComponent: function(pointer: CA_Component) --> CA_UIC
 --# assume global find_uicomponent_from_table: function(root: CA_UIC, findtable: vector<string>) --> CA_UIC
---# assume global uicomponent_descended_from: function(root: CA_UIC, parent_name: string)
+--# assume global uicomponent_descended_from: function(root: CA_UIC, parent_name: string) --> boolean
 --# assume global out: function(out: string | number)  
 --# assume global print_all_uicomponent_children: function(component: CA_UIC)
 --# assume global is_uicomponent: function(object: any) --> boolean
@@ -390,3 +390,4 @@
 
 --# assume RITE_UNLOCK.new: method(rite_key: string, event_name: string, condition: function(context: WHATEVER, faction_name: string)--> boolean, faction: string?) --> RITE_UNLOCK
 --# assume RITE_UNLOCK.start: method(human_faction_name: string)
+

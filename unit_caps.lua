@@ -1,7 +1,8 @@
 RECRUITMENT_CONTROLS_LOG = true --:boolean
 
 
--- vanish error controller
+-- Vanish's Error Checking Wrappers.
+--Modified slightly for use with my custom log.
 --require("test")
 --[[
     --v [NO_CHECK] function(func: function) --> any
@@ -271,6 +272,7 @@ function RecruiterCharacter.Load(cqi, queuetable)
     self.cqi = cqi
     self.RecruiterManager = nil 
     self.QueueTable = queuetable
+    self.LocalQueueInsertPosition = 1;
     self.CurrentRestrictions = {} 
     self.QueueEmpty = false
     self.CurrentArmy = {} 
@@ -311,8 +313,20 @@ function RecruiterCharacter.IsQueueEmpty(self)
     return self.QueueEmpty
 end
 
+--v function(self: RECRUITER_CHARACTER) --> number
+function RecruiterCharacter.GetLocalInsertPosition(self)
+    return self.LocalQueueInsertPosition
+end
 
+--v function(self: RECRUITER_CHARACTER)
+function RecruiterCharacter.IncrementLocalInsert(self)
+    self.LocalQueueInsertPosition = self.LocalQueueInsertPosition + 1;
+end
 
+--v function(self: RECRUITER_CHARACTER)
+function RecruiterCharacter.DecrementLocalInsert(self)
+    self.LocalQueueInsertPosition = self.LocalQueueInsertPosition - 1;
+end
 
 
 --v function(self: RECRUITER_CHARACTER)
@@ -320,6 +334,7 @@ function RecruiterCharacter.EmptyQueue(self)
     RCLOG("Emptying the Queue for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.EmptyQueue(self)")
     self.QueueEmpty = true;
     self.QueueTable = {}
+    self.LocalQueueInsertPosition = 1;
 end
 
 --v function(self:RECRUITER_CHARACTER) --> CA_CQI
@@ -391,13 +406,20 @@ function RecruiterCharacter.GetTotalCountForUnit(self, unit_component_ID)
 end
 
 
---v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
-function RecruiterCharacter.AddToQueue(self, unit_component_ID)
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string, isGlobal: boolean)
+function RecruiterCharacter.AddToQueue(self, unit_component_ID, isGlobal)
     RCLOG("Adding ["..unit_component_ID.."] to the queue of a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "function RecruiterCharacter.AddToQueue(self, unit_component_ID)")
-    table.insert(self.QueueTable, unit_component_ID)
+    if isGlobal then
+        table.insert(self.QueueTable, unit_component_ID)
+    else 
+        
+        table.insert(self.QueueTable, self:GetLocalInsertPosition(), unit_component_ID) 
+        self:IncrementLocalInsert()
+    end
     self.QueueEmpty = false;
     self:SetCounts()
 end
+
 
 --v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
 function RecruiterCharacter.RemoveUnitFromQueue(self, unit_component_ID)
@@ -406,6 +428,9 @@ function RecruiterCharacter.RemoveUnitFromQueue(self, unit_component_ID)
         if self.QueueTable[i] == unit_component_ID then
             RCLOG("unit_component_ID is ["..unit_component_ID.."], while ["..tostring(i).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, unit_component_ID)")
             table.remove(self.QueueTable, i)
+            if i < self:GetLocalInsertPosition() then
+                self:DecrementLocalInsert()
+            end
         end
     end
     self:SetCounts()
@@ -420,6 +445,9 @@ function RecruiterCharacter.RemoveFromQueueAndReturnUnit(self, queue_component_I
     RCLOG("Unit ID is ["..self.QueueTable[queueID].."], while ["..tostring(queueID).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)")
     local cached_unit = self.QueueTable[queueID]
     table.remove(self.QueueTable, queueID)
+    if queueID < self:GetLocalInsertPosition() then
+        self:DecrementLocalInsert()
+    end
     self:SetCounts()
     return cached_unit
 end
@@ -500,6 +528,7 @@ function RecruiterManager.Init()
 
     self.Characters = {} --:map<CA_CQI, RECRUITER_CHARACTER>
     self.CurrentlySelectedCharacter = nil --:RECRUITER_CHARACTER
+    self.EvaluatedCSC = false;
     self.RegionRestrictions = {} --:map<string, map<string, boolean>>
     self.UnitQuantityRestrictions = {} --:map<string, number>
 
@@ -516,7 +545,11 @@ end
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.SetCurrentlySelectedCharacter(self, cqi)
     RCLOG("Set the CurrentlySelectedCharacter to ["..tostring(cqi).."]", "RecruiterManager.SetCurrentlySelectedCharacter(self, cqi)")
+    if not self.CurrentlySelectedCharacter == self.Characters[cqi] then
+        self.EvaluatedCSC = false;
+    end
     self.CurrentlySelectedCharacter = self.Characters[cqi]
+    
 end
 
 
@@ -617,6 +650,10 @@ end
 
 --v function(self: RECRUITER_MANAGER)
 function RecruiterManager.EvaluateAllRestrictions(self)
+    if self.EvaluatedCSC == true then
+        return 
+    end
+    self.EvaluatedCSC = true
     local character = self:GetCurrentlySelectedCharacter()
     local region = character:GetRegion()
 
@@ -740,9 +777,9 @@ function RecruiterManager.OnQueuedUnitClicked(self, context)
     end
 end
 
---v function(self: RECRUITER_MANAGER, unit_component_ID: string)
-function RecruiterManager.OnRecruitableUnitClicked(self,unit_component_ID)
-    self:GetCurrentlySelectedCharacter():AddToQueue(unit_component_ID)
+--v function(self: RECRUITER_MANAGER, unit_component_ID: string, isGlobal: boolean)
+function RecruiterManager.OnRecruitableUnitClicked(self,unit_component_ID, isGlobal)
+    self:GetCurrentlySelectedCharacter():AddToQueue(unit_component_ID, isGlobal)
     self:EvaluateSingleUnitRestriction(unit_component_ID)
 end
 
@@ -763,7 +800,8 @@ function RecruiterManager.Listen(self)
             if string.find(unit_component_ID, "_recruitable") and UIComponent(context.component):CurrentState() == "active" then
                 UIComponent(context.component):SetInteractive(false)
                 RCLOG("Locking recruitment button for ["..unit_component_ID.."] temporarily", "RecruiterManager.Listen(self).core.add_listener.RecruiterManagerOnRecruitOptionClicked");
-                self:OnRecruitableUnitClicked(unit_component_ID)
+                local isGlobal = uicomponent_descended_from(UIComponent(context.component), "global")
+                self:OnRecruitableUnitClicked(unit_component_ID, isGlobal)
             end
         end,
         true);
