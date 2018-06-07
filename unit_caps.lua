@@ -268,11 +268,13 @@ function RecruiterCharacter.Create(cqi)
     self.cqi = cqi
     self.RecruiterManager = nil --:RECRUITER_MANAGER
     self.QueueTable = {} --:vector<string>
+    self.QueueDetails = {} --:vector<number>
     self.CurrentRestrictions = {} --:map<string, boolean>
     self.QueueEmpty = true --:boolean
     self.CurrentArmy = {} --:vector<string>
     self.TotalCount = {} --:map<string, number>
     self.RegionKey = "" --:string
+    self.QueueDataAge = 0 --:number
 
     RCLOG("Created a RECRUITER_CHARACTER at CQI ["..tostring(cqi).."] ", "RecruiterCharacter.Create(cqi)")
     return self
@@ -352,6 +354,8 @@ function RecruiterCharacter.EmptyQueue(self)
     RCLOG("Emptying the Queue for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.EmptyQueue(self)")
     self.QueueEmpty = true;
     self.QueueTable = {}
+    self.QueueDetails = {}
+    self.QueueDataAge = 0;
     self.LocalQueueInsertPosition = 1;
 end
 
@@ -396,6 +400,28 @@ function RecruiterCharacter.EvaluateArmy(self)
 end
 
 --v function(self: RECRUITER_CHARACTER)
+function RecruiterCharacter.UpdateQueueDetails(self)
+
+
+    self.QueueDataAge = 0;
+end
+
+--v function(self: RECRUITER_CHARACTER) --> number
+function RecruiterCharacter.GetQueueDataAge(self)
+    return self.QueueDataAge
+end
+
+--v function(self: RECRUITER_CHARACTER)
+function RecruiterCharacter.IncrementQueueDataAge(self)
+    self.QueueDataAge = self.QueueDataAge + 1;
+end
+
+--v function(self: RECRUITER_CHARACTER, position: int, turns: number)
+function RecruiterCharacter.SetQueueDetail(self, position, turns)
+    self.QueueDetails[position] = turns
+end
+
+--v function(self: RECRUITER_CHARACTER)
 function RecruiterCharacter.SetCounts(self)
     RCLOG("Setting counts for selected a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.SetCounts(self)")
 
@@ -429,9 +455,11 @@ function RecruiterCharacter.AddToQueue(self, unit_component_ID, isGlobal)
     RCLOG("Adding ["..unit_component_ID.."] to the queue of a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "function RecruiterCharacter.AddToQueue(self, unit_component_ID)")
     if isGlobal then
         table.insert(self.QueueTable, unit_component_ID)
+        table.insert(self.QueueDetails, 0)
     else 
         
         table.insert(self.QueueTable, self:GetLocalInsertPosition(), unit_component_ID) 
+        table.insert(self.QueueDetails, self:GetLocalInsertPosition(), 0)
         self:IncrementLocalInsert()
     end
     self.QueueEmpty = false;
@@ -443,7 +471,7 @@ end
 function RecruiterCharacter.RemoveUnitFromQueue(self, unit_component_ID)
     RCLOG("Removing ["..unit_component_ID.."] from the queue for a RECRUITER_CHARACTER with CQI ["..tostring(self.cqi).."]", "RecruiterCharacter.RemoveFromQueue(self, unit_component_ID)")
     for i = 1, #self.QueueTable do
-        if self.QueueTable[i] == unit_component_ID then
+        if self.QueueTable[i] == unit_component_ID and self.QueueDetails[i] == self.QueueDataAge then
             RCLOG("unit_component_ID is ["..unit_component_ID.."], while ["..tostring(i).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, unit_component_ID)")
             table.remove(self.QueueTable, i)
             if i < self:GetLocalInsertPosition() then
@@ -463,6 +491,7 @@ function RecruiterCharacter.RemoveFromQueueAndReturnUnit(self, queue_component_I
     RCLOG("Unit ID is ["..self.QueueTable[queueID].."], while ["..tostring(queueID).."] is QID", "RecruiterCharacter.RemoveFromQueue(self, queue_component_ID)")
     local cached_unit = self.QueueTable[queueID]
     table.remove(self.QueueTable, queueID)
+    table.remove(self.QueueDetails, queueID)
     if queueID < self:GetLocalInsertPosition() then
         self:DecrementLocalInsert()
     end
@@ -520,9 +549,7 @@ function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)
     else
         RCLOG("WARNING: Could not find the component for the global recruitment list!. Is the panel closed? Does the Player not have global recruitment?", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
     end
-
-
-    
+    self:UpdateQueueDetails()
 end
 
 
@@ -766,6 +793,7 @@ end
 function RecruiterManager.GetCurrentlySelectedCharacter(self)
     return self.CurrentlySelectedCharacter 
 end
+
 
 --v function(self: RECRUITER_MANAGER, cqi: CA_CQI)
 function RecruiterManager.SetCurrentlySelectedCharacter(self, cqi)
@@ -1089,9 +1117,16 @@ end
 function RecruiterManager.OnRecruitableUnitClicked(self,unit_component_ID, isGlobal)
     self:GetCurrentlySelectedCharacter():AddToQueue(unit_component_ID, isGlobal)
     self:EvaluateSingleUnitRestriction(unit_component_ID)
-end
+end;
 
-
+--v function(self: RECRUITER_MANAGER)
+function RecruiterManager.OnFactionTurnEnd(self)
+    for k, v in pairs(self.Characters) do
+        if not v:IsQueueEmpty() then
+            v:IncrementQueueDataAge()
+        end
+    end
+end;
 
 --listeners.
 
@@ -1181,6 +1216,16 @@ function RecruiterManager.Listen(self)
             end, 0.1);
         end,
         true);	
+    core:add_listener(
+        "RecruitmentManagerOnFactionTurnEnd",
+        "FactionTurnEnd",
+        function(context)
+            return context:faction():is_human()
+        end,
+        function(context)
+            self:OnFactionTurnEnd()
+        end,
+        true);
 
 
 end
