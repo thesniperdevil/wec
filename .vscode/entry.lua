@@ -4,4 +4,4 @@
 --require("wh_chaos_invasion")
 --require("wec_kingdoms_of_ulthuan")
 
-require("unit_caps")
+require("recruiter_controls")

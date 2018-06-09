@@ -82,6 +82,7 @@
 --# assume CA_UIC.ShaderTechniqueSet: method(technique: string | number, unknown: boolean)
 --# assume CA_UIC.ShaderVarsSet: method(p1: number, p2: number, p3: number, p4: number, unknown: boolean)
 --# assume CA_UIC.SimulateClick: method()
+--# assume CA_UIC.SimulateMouseOn: method()
 --# assume CA_UIC.Visible: method() --> boolean
 
 --# assume CA_UIC.SetImage: method(path: string)
