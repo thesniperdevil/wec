@@ -21,6 +21,12 @@ self.Region = nil --:string
 return self
 end;
 
+
+--v function(self: RECRUITER_CHARACTER) --> CA_CQI
+function RecruiterCharacter.GetCQI(self)
+    return self.CommandQueueIndex
+end
+
 --v function(self: RECRUITER_CHARACTER)
 function RecruiterCharacter.SetCounts(self)
     RCLOG("Setting counts for selected a RECRUITER_CHARACTER with CQI ["..tostring(self.CommandQueueIndex).."]", "RecruiterCharacter.SetCounts(self)")
@@ -100,4 +106,55 @@ function RecruiterCharacter.EvaluateArmy(self)
     RCLOG(outputstring, "RecruiterCharacter.EvaluateArmy(self)")
 end
 
+--v function (self: RECRUITER_CHARACTER, unit_component_ID:string, restrict: boolean)
+function RecruiterCharacter.SetRestriction(self, unit_component_ID, restrict)
+    self.CurrentRestrictions[unit_component_ID] = restrict
+end
 
+
+--v function(self: RECRUITER_CHARACTER, unit_component_ID: string)
+function RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)
+    RCLOG("Applying Restrictions for character ["..tostring(self:GetCQI()).."] and unit ["..unit_component_ID.."] ", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+    local localRecruitmentTable = {"units_panel", "main_units_panel", "recruitment_docker", "recruitment_options", "recruitment_listbox", "local1", "unit_list", "listview", "list_clip", "list_box"};
+    local localUnitList = find_uicomponent_from_table(core:get_ui_root(), localRecruitmentTable);
+    if is_uicomponent(localUnitList) then
+        local unitCard = find_uicomponent(localUnitList, unit_component_ID);	
+        if is_uicomponent(unitCard) then
+            if self.CurrentRestrictions[unit_component_ID] == true then
+                RCLOG("Locking Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+                unitCard:SetInteractive(false)
+                unitCard:SetVisible(false)
+            else
+                RCLOG("Unlocking! Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+                unitCard:SetInteractive(true)
+                unitCard:SetVisible(true)
+            end
+        else 
+            RCERROR("Unit Card isn't a component!")
+        end
+    else
+        RCERROR("WARNING: Could not find the component for the unit list!. Is the panel closed?")
+    end
+
+    local globalRecruitmentTable = {"units_panel", "main_units_panel", "recruitment_docker", "recruitment_options", "recruitment_listbox", "global", "unit_list", "listview", "list_clip", "list_box"};
+    local globalUnitList = find_uicomponent_from_table(core:get_ui_root(), globalRecruitmentTable);
+    if is_uicomponent(globalUnitList) then
+        local unitCard = find_uicomponent(globalUnitList, unit_component_ID);	
+        if is_uicomponent(unitCard) then
+            if self.CurrentRestrictions[unit_component_ID] == true then
+                RCLOG("Locking Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+                unitCard:SetInteractive(false)
+                unitCard:SetVisible(false)
+            else
+                RCLOG("Unlocking! Unit Card ["..unit_component_ID.."]", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+                unitCard:SetInteractive(true)
+                unitCard:SetVisible(true)
+            end
+        else 
+            RCERROR("Unit Card isn't a component!")
+        end
+    else
+        RCLOG("WARNING: Could not find the component for the global recruitment list!. Is the panel closed? Does the Player not have global recruitment?", "RecruiterCharacter.ApplyRestrictionToUnit(self, unit_component_ID)")
+    end 
+end
+    
