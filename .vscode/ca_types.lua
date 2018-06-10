@@ -15,6 +15,7 @@
 --# assume global class CA_MILITARY_FORCE_LIST
 --# assume global class CA_REGION
 --# assume global class CA_REGION_LIST
+--# assume global class CA_REGION_MANAGER
 --# assume global class CA_SETTLEMENT
 --# assume global class CA_GARRISON_RESIDENCE
 --# assume global class CA_SLOT_LIST
@@ -225,10 +226,15 @@
 --# assume CA_CHAR.character_subtype: method(subtype: string) --> boolean
 --# assume CA_CHAR.get_forename: method() --> string
 --# assume CA_CHAR.command_queue_index: method() --> CA_CQI
+--# assume CA_CHAR.cqi: method() --> CA_CQI
 --# assume CA_CHAR.rank: method() --> int
 --# assume CA_CHAR.won_battle: method() --> boolean
+--# assume CA_CHAR.battles_fought: method() --> number
 --# assume CA_CHAR.is_wounded: method() --> boolean
 --# assume CA_CHAR.has_military_force: method() --> boolean
+--# assume CA_CHAR.is_faction_leader: method() --> boolean
+--# assume CA_CHAR.family_member: method() --> CA_CHAR
+
 -- CHARACTER LIST
 --# assume CA_CHAR_LIST.num_items: method() --> number
 --# assume CA_CHAR_LIST.item_at: method(index: number) --> CA_CHAR
@@ -278,6 +284,8 @@
 --SLOT
 --# assume CA_SLOT.has_building: method() --> boolean
 --# assume CA_SLOT.building: method() --> CA_BUILDING
+--# assume CA_SLOT.resource_key: method() --> string
+
 
 --BUILDING
 --# assume CA_BUILDING.name: method() --> string
@@ -288,7 +296,11 @@
 
 -- GARRISON RESIDENCE
 --# assume CA_GARRISON_RESIDENCE.region: method() --> CA_REGION
-
+--# assume CA_GARRISON_RESIDENCE.faction: method() --> CA_FACTION
+--# assume CA_GARRISON_RESIDENCE.is_under_siege: method() --> boolean
+--# assume CA_GARRISON_RESIDENCE.settlement_interface: method() --> CA_SETTLEMENT
+--# assume CA_GARRISON_RESIDENCE.army: method() --> CA_MILITARY_FORCE
+--# assume CA_GARRISON_RESIDENCE.command_queue_index: method() --> CA_CQI
 
 -- MODEL
 --# assume CA_MODEL.world: method() --> CA_WORLD
@@ -296,12 +308,24 @@
 --# assume CA_MODEL.turn_number: method() --> number
 --# assume CA_MODEL.pending_battle: method() --> CA_PENDING_BATTLE
 --# assume CA_MODEL.combined_difficulty_level: method() --> int
-
+--# assume CA_MODEL.campaign_name: method(campaign_name: string) --> boolean
+--# assume CA_MODEL.campaign_type: method() --> number
+--# assume CA_MODEL.is_multiplayer: method() --> boolean
+--# assume CA_MODEL.military_force_for_command_queue_index: method(cqi: CA_CQI) --> CA_MILITARY_FORCE
+--# assume CA_MODEL.character_for_command_queue_index: method(cqi: CA_CQI) --> CA_CHAR
+--# assume CA_MODEL.random_percent: method(chance: number) --> boolean
+--# assume CA_MODEL.facton_is_local: method(faction_key: string) --> boolean
 
 -- WORLD
 --# assume CA_WORLD.faction_list: method() --> CA_FACTION_LIST
 --# assume CA_WORLD.faction_by_key: method(factionKey: string) --> CA_FACTION
 --# assume CA_WORLD.whose_turn_is_it: method() --> CA_FACTION
+--# assume CA_WORLD.region_manager: method() --> CA_REGION_MANAGER
+
+--REGION_MANAGER
+--# assume CA_REGION_MANAGER.region_list: method() --> CA_REGION_LIST
+--# assume CA_REGION_MANAGER.region_by_key: method(key: string) --> CA_REGION
+
 
 -- FACTION
 --# assume CA_FACTION.character_list: method() --> CA_CHAR_LIST
@@ -385,6 +409,13 @@
 --# assume global Get_Character_Side_In_Last_Battle: function(char: CA_CHAR) --> BATTLE_SIDE
 --# assume global q_setup: function()
 --# assume global set_up_rank_up_listener: function(quest_table: vector<vector<string | number>>, subtype: string, infotext: vector<string | number>)
+
+
+
+
+
+
+--CA LUA OBJECTS:
 
 -- RITES UNLOCK OBJECT
 
