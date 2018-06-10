@@ -201,7 +201,8 @@
 --# assume CM.force_add_and_equip_ancillary: method(lookup: string, ancillary: string)
 --# assume CM.trigger_dilemma: method(faction_key: string, dilemma_key: string, trigger_immediately: boolean)
 --# assume CM.force_diplomacy:  method(faction: string, other_faction: string, record: string, offer: boolean, accept: boolean, enable_payments: boolean)
-
+--# assume CM.override_building_chain_display: method(building_chain: string, settlement_skin: string)
+--# assume CM.add_game_created_callback: method(callback: function)
 --# assume CM.set_ritual_unlocked: method(cqi: CA_CQI, rite_key: string, unlock: boolean)
 --# assume CM.pooled_resource_mod: method(cqi: CA_CQI, pooled_resource: string, factor: string, quantity: number)
 -- CAMPAIGN UI MANAGER
