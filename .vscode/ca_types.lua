@@ -50,6 +50,8 @@
 --# type global BATTLE_SIDE =
 --# "Attacker" | "Defender" 
 
+--# type global CA_MARKER_TYPE = 
+--# "pointer" | "move_to_vfx" | "look_at_vfx" | "tutorial_marker"
 
 
 -- CONTEXT
@@ -146,6 +148,24 @@
 --#     callback: (function(CA_CQI))?
 --# )
 
+--# assume CM.show_message_event_located: method(
+--#     faction_key: string,
+--#     primary_detail: string,
+--#     secondary_detail: string,
+--#     flavour_text: string,
+--#     location_x: number,
+--#     location_y: number,
+--#     show_immediately: boolean,
+--#     event_picture_id: number
+--#)
+
+--# assume CM.add_marker: method(
+--# name: string,
+--# marker_type: CA_MARKER_TYPE,
+--# location_x: number,
+--# location_y: number,
+--# location_z: number )
+--# assume CM.remove_marker: method (name: string)
 
 
 --# assume CM.force_add_trait: method(character_cqi: CA_CQI, trait_key: string, showMessage: boolean)
@@ -181,6 +201,7 @@
 --# assume CM.force_make_peace: method(faction: string, other_faction: string)
 --# assume CM.force_declare_war: method(declarer: string, declaree: string, attacker_allies: boolean, defender_allies: boolean)
 --# assume CM.force_make_vassal: method(vassaliser: string, vassal: string)
+--# assume CM.force_make_trade_agreement: method(faction1: string, faction2: string)
 --# assume CM.faction_has_trade_agreement_with_faction: method( first_faction: CA_FACTION, second_faction: CA_FACTION)
 --# assume CM.faction_has_nap_with_faction: method(first_faction: CA_FACTION, second_faction: CA_FACTION)
 
@@ -206,6 +227,11 @@
 --# assume CM.add_game_created_callback: method(callback: function)
 --# assume CM.set_ritual_unlocked: method(cqi: CA_CQI, rite_key: string, unlock: boolean)
 --# assume CM.pooled_resource_mod: method(cqi: CA_CQI, pooled_resource: string, factor: string, quantity: number)
+--# assume CM.faction_set_food_factor_value: method(faction_key: string, factor_key: string, quantity: number)
+--# assume CM.replenish_action_points: method(lookup:string)
+--# assume CM.force_add_skill: method(lookup: string, skill_key: string)
+--# assume CM.scroll_camera_from_current: WHATEVER
+
 -- CAMPAIGN UI MANAGER
 --# assume CUIM.get_char_selected: method() --> string
 --# assume CUIM.settlement_selected: string
@@ -219,12 +245,15 @@
 --# assume CA_CHAR.has_trait: method(traitName: string) --> boolean
 --# assume CA_CHAR.logical_position_x: method() --> number
 --# assume CA_CHAR.logical_position_y: method() --> number
+--# assume CA_CHAR.display_position_x: method() --> number
+--# assume CA_CHAR.display_position_y: method() --> number
 --# assume CA_CHAR.character_subtype_key: method() --> string
 --# assume CA_CHAR.region: method() --> CA_REGION
 --# assume CA_CHAR.faction: method() --> CA_FACTION
 --# assume CA_CHAR.military_force: method() --> CA_MILITARY_FORCE
 --# assume CA_CHAR.character_subtype: method(subtype: string) --> boolean
 --# assume CA_CHAR.get_forename: method() --> string
+--# assume CA_CHAR.get_surname: method() --> string
 --# assume CA_CHAR.command_queue_index: method() --> CA_CQI
 --# assume CA_CHAR.cqi: method() --> CA_CQI
 --# assume CA_CHAR.rank: method() --> int
@@ -337,6 +366,7 @@
 --# assume CA_FACTION.is_human: method() --> boolean
 --# assume CA_FACTION.is_dead: method() --> boolean
 --# assume CA_FACTION.is_vassal_of: method(faction: string) --> boolean
+--# assume CA_FACTION.is_vassal: method() --> boolean
 --# assume CA_FACTION.is_ally_vassal_or_client_state_of: method(faction: string) --> boolean
 --# assume CA_FACTION.at_war_with: method(faction: CA_FACTION) --> boolean
 --# assume CA_FACTION.region_list: method() --> CA_REGION_LIST
@@ -344,6 +374,7 @@
 --# assume CA_FACTION.home_region: method() --> CA_REGION
 --# assume CA_FACTION.command_queue_index: method() --> CA_CQI
 --# assume CA_FACTION.is_null_interface: method() --> boolean
+--# assume CA_FACTION.faction_leader: method() --> CA_CHAR
 
 -- FACTION LIST
 --# assume CA_FACTION_LIST.num_items: method() --> number
@@ -377,11 +408,6 @@
 --# assume CORE.get_screen_resolution: method() --> (number, number)
 --# assume CORE.trigger_event: method(event_name: string)
 
--- GLOBAL VARIABLES
---# assume global cm: CM
---# assume global core: CORE
---# assume global effect: CA_EFFECT
---# assume global __write_output_to_logfile: boolean
 
 
 -- GLOBAL FUNCTIONS
@@ -424,3 +450,30 @@
 --# assume RITE_UNLOCK.new: method(rite_key: string, event_name: string, condition: function(context: WHATEVER, faction_name: string)--> boolean, faction: string?) --> RITE_UNLOCK
 --# assume RITE_UNLOCK.start: method(human_faction_name: string)
 
+-- MISSION MANAGER OBJECT
+
+--# assume global class MISSION_MANAGER
+--# type global CA_MISSION_OBJECTIVE =
+--# "CAPTURE_REGIONS"
+
+--# assume MISSION_MANAGER.new: method(faction_key: string, mission_key: string, success_callback: function?, failure_callback: function?, cancellation_callback: function?) --> MISSION_MANAGER
+--# assume MISSION_MANAGER.add_new_objective: method(objective_type: CA_MISSION_OBJECTIVE)
+--# assume MISSION_MANAGER.add_condition: method(condition_string: string)
+--# assume MISSION_MANAGER.add_payload: method(payload_string: string)
+--# assume MISSION_MANAGER.set_should_cancel_before_issuing: method(boolean?)
+--# assume MISSION_MANAGER.trigger: method(dismiss_callback: function?, delay: number?)
+
+
+
+
+
+
+
+-- GLOBAL VARIABLES
+--leave at the bottom of this file
+--# assume global cm: CM
+--# assume global core: CORE
+--# assume global effect: CA_EFFECT
+--# assume global __write_output_to_logfile: boolean
+--# assume global mission_manager: MISSION_MANAGER
+--# assume global rite_unlock: RITE_UNLOCK
