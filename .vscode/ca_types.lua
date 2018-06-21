@@ -204,9 +204,12 @@
 --# assume CM.force_make_trade_agreement: method(faction1: string, faction2: string)
 --# assume CM.faction_has_trade_agreement_with_faction: method( first_faction: CA_FACTION, second_faction: CA_FACTION)
 --# assume CM.faction_has_nap_with_faction: method(first_faction: CA_FACTION, second_faction: CA_FACTION)
+--# assume CM.force_confederation: method(confederator: string, confederated: string)
 
 --# assume CM.pending_battle_cache_get_defender: method(pos: int) --> (CA_CQI, CA_CQI, string)
 --# assume CM.pending_battle_cache_get_attacker: method(pos: int) --> (CA_CQI, CA_CQI, string)
+--# assume CM.pending_battle_cache_get_enemies_of_char: method(char: CA_CHAR) --> vector<CA_CHAR>
+
 --# assume CM.force_change_cai_faction_personality: method(key: string, personality: string)
 --# assume CM.transfer_region_to_faction: method(region: string, faction:string)
 --# assume CM.award_experience_level: method(char_lookup_str: string, level: int)
@@ -432,6 +435,7 @@
 
 -- CAMPAIGN
 --# assume global get_cm: function() --> CM
+--# assume global get_events: function() --> map<string, vector<function(context:WHATEVER?)>>
 --# assume global Get_Character_Side_In_Last_Battle: function(char: CA_CHAR) --> BATTLE_SIDE
 --# assume global q_setup: function()
 --# assume global set_up_rank_up_listener: function(quest_table: vector<vector<string | number>>, subtype: string, infotext: vector<string | number>)
