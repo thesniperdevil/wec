@@ -13,3 +13,6 @@
 --# assume global class RECRUITER_CHARACTER
 --# assume global class RECRUITER_GROUP
 --# assume global class RECRUITER_REGION
+
+
+--# assume global class LOREFUL_EMPIRES_MANAGER

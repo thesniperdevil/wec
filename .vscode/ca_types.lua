@@ -235,6 +235,9 @@
 --# assume CM.force_add_skill: method(lookup: string, skill_key: string)
 --# assume CM.scroll_camera_from_current: WHATEVER
 
+--# assume CM.win_next_autoresolve_battle: method(faction: string)
+--# assume CM.modify_next_autoresolve_battle: method(attacker_win_chance: number, defender_win_chance: number, attacker_losses_modifier: number, defender_losses_modifier: number, wipe_out_loser: boolean)
+
 -- CAMPAIGN UI MANAGER
 --# assume CUIM.get_char_selected: method() --> string
 --# assume CUIM.settlement_selected: string
@@ -371,6 +374,7 @@
 --# assume CA_FACTION.is_vassal_of: method(faction: string) --> boolean
 --# assume CA_FACTION.is_vassal: method() --> boolean
 --# assume CA_FACTION.is_ally_vassal_or_client_state_of: method(faction: string) --> boolean
+--# assume CA_FACTION.allied_with: method(faction: CA_FACTION)
 --# assume CA_FACTION.at_war_with: method(faction: CA_FACTION) --> boolean
 --# assume CA_FACTION.region_list: method() --> CA_REGION_LIST
 --# assume CA_FACTION.has_effect_bundle: method(bundle:string) --> boolean
@@ -481,3 +485,4 @@
 --# assume global __write_output_to_logfile: boolean
 --# assume global mission_manager: MISSION_MANAGER
 --# assume global rite_unlock: RITE_UNLOCK
+--# assume global events: map<string, vector<function(context:WHATEVER?)>>
