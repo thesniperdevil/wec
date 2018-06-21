@@ -2,7 +2,7 @@
 --last update 6/2/2018
 
 
-OWR_LOG_ALLOWED = true 
+OWR_LOG_ALLOWED = false 
 
 
 
@@ -49,7 +49,7 @@ end
 --v [NO_CHECK] function(faction: CA_FACTION)
 function Calculate_Economy_Penalty(faction)
     if Is_Bretonnian(faction:name()) and faction:is_human() then
-        OWRLOG("---- Calculate_Economy_Penalty ----");
+        output_P("---- Calculate_Economy_Penalty ----");
         local peasant_count = 0;
         local force_list = faction:military_force_list();
         local region_count = faction:region_list():num_items();
@@ -66,7 +66,7 @@ function Calculate_Economy_Penalty(faction)
                     local key = unit:unit_key();
                     local val = Bretonnia_Peasant_Units[key] or 0;
                     
-                    OWRLOG("\t"..key.." - "..val);
+                    output_P("\t"..key.." - "..val);
                     peasant_count = peasant_count + val;
                 end
             end
@@ -78,7 +78,7 @@ function Calculate_Economy_Penalty(faction)
             end
         end
         
-        OWRLOG("\tPeasants: "..peasant_count);
+        output_P("\tPeasants: "..peasant_count);
         Remove_Economy_Penalty(faction);
         
     
@@ -114,17 +114,17 @@ function Calculate_Economy_Penalty(faction)
         
         local free_peasants = (region_count * peasants_per_region_fac) + peasants_base_amount_fac;
         free_peasants = math.max(1, free_peasants);
-        OWRLOG("Free Peasants: "..free_peasants);
+        output_P("Free Peasants: "..free_peasants);
         local peasant_percent = (peasant_count / free_peasants) * 100;
-        OWRLOG("Peasant Percent: "..peasant_percent.."%");
+        output_P("Peasant Percent: "..peasant_percent.."%");
         peasant_percent = RoundUp(peasant_percent);
-        OWRLOG("Peasant Percent Rounded: "..peasant_percent.."%");
+        output_P("Peasant Percent Rounded: "..peasant_percent.."%");
         peasant_percent = math.min(peasant_percent, 200);
-        OWRLOG("Peasant Percent Clamped: "..peasant_percent.."%");
+        output_P("Peasant Percent Clamped: "..peasant_percent.."%");
         
         if peasant_percent > 100 then
             peasant_percent = peasant_percent - 100;
-            OWRLOG("Peasant Percent Final: "..peasant_percent);
+            output_P("Peasant Percent Final: "..peasant_percent);
             cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX..peasant_percent, faction:name(), 0);
             
             if cm:get_saved_value("ScriptEventNegativePeasantEconomy") ~= true and faction:is_human() then
@@ -140,7 +140,7 @@ function Calculate_Economy_Penalty(faction)
             
             PEASANTS_RATIO_POSITIVE = false;
         else
-            OWRLOG("Peasant Percent Final: 0");
+            output_P("Peasant Percent Final: 0");
             cm:apply_effect_bundle(PEASANTS_EFFECT_PREFIX.."0", faction:name(), 0);
             
             if cm:get_saved_value("ScriptEventNegativePeasantEconomy") == true and cm:get_saved_value("ScriptEventPositivePeasantEconomy") ~= true and faction:is_human() then
@@ -239,7 +239,6 @@ function apply_effect_to_regions(faction, effect_bundle)
 		end;
 	end;
 end;
-
 
 
 
@@ -551,6 +550,90 @@ function owr_rite_unlock_listeners()
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_dwf_slayer_2");
 				end
 		},
+
+		--KRAKA DRAK--
+		--Guilds--
+		--research kraka_tech4_ancestors
+		{
+			["subculture"] = "wh_main_sc_dwf_dwarfs",
+			["rite_name"] = "wh_main_ritual_dwf_guilds",
+			["event_name"] = "FactionTurnStart",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+									
+					return context:faction():name() == faction_name and context:faction():has_technology("kraka_tech4_ancestors")
+				end,
+			["faction_name"] = "wh_main_dwf_kraka_drak"
+		},
+
+		--Holds--
+		--own 6 settlements
+		{
+			["subculture"] = "wh_main_sc_dwf_dwarfs",
+			["rite_name"] = "wh_main_ritual_dwf_holds",
+			["event_name"] = "GarrisonOccupiedEvent",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local faction = context:character():faction();
+					
+					return faction:name() == faction_name and faction:region_list():num_items() >= 6;
+				end,
+			["faction_name"] = "wh_main_dwf_kraka_drak"
+		},		
+		
+		--Underway--
+		--level 7 faction leader
+		{
+			["subculture"] = "wh_main_sc_dwf_dwarfs",
+			["rite_name"] = "wh_main_ritual_dwf_underway",
+			["event_name"] = "CharacterRankUp",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local character = context:character();
+					
+					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
+				end,
+			["faction_name"] = "wh_main_dwf_kraka_drak"
+		},		
+		
+		--Oath--
+		--build wh_main_dwf_slayer_2
+		{
+			["subculture"] = "wh_main_sc_dwf_dwarfs",
+			["rite_name"] = "wh_main_ritual_dwf_oath",
+			["event_name"] = "BuildingCompleted",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local building = context:building();
+					
+					return building:faction():name() == faction_name and building:name() == "wh_main_dwf_slayer_2";
+				end,
+			["faction_name"] = "wh_main_dwf_kraka_drak"
+		},
+		--Oath secondary--
+		{
+			["subculture"] = "wh_main_sc_dwf_dwarfs",
+			["rite_name"] = "wh_main_ritual_dwf_oath",
+			["event_name"] = "GarrisonOccupiedEvent",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local region = context:garrison_residence():region();
+					
+					return context:character():faction():name() == faction_name and region:building_exists("wh_main_dwf_slayer_2");
+				end,
+			["faction_name"] = "wh_main_dwf_kraka_drak"
+		},		
+
 
 		---EMPIRE---
 		--Gunpowder
@@ -1059,8 +1142,9 @@ function owr_rite_unlock_listeners()
                         
                         return slaughter_count >= 10;
                     end
-                end;
-        },		
+				end,
+			["faction_name"] = "wh_main_chs_chaos"
+		},
 		
 		--Storms
 		--build wh_main_horde_chaos_magic_2
@@ -1074,7 +1158,8 @@ function owr_rite_unlock_listeners()
 			)
 					return context:building() == "wh_main_horde_chaos_magic_2" and context:character():faction():is_human();
 					--return false;
-				end
+				end,
+			["faction_name"] = "wh_main_chs_chaos"
 		},
 		
 		--Tides
@@ -1090,7 +1175,8 @@ function owr_rite_unlock_listeners()
 					local character = context:character();
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
-				end
+				end,
+			["faction_name"] = "wh_main_chs_chaos"
 		},
 		
 		--Cults
@@ -1115,9 +1201,93 @@ function owr_rite_unlock_listeners()
 					return raze_count >= 5
 				
 				
-				end
-		},		
+				end,
+			["faction_name"] = "wh_main_chs_chaos"
+		},	
 		
+		--SARTH--
+		--Gods
+		--slaughter 10 sets of prisoners
+        {
+            ["subculture"] = "wh_main_sc_chs_chaos",
+            ["rite_name"] = "wh_main_ritual_chs_gods",
+            ["event_name"] = "CharacterPostBattleSlaughter",
+            ["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+                    if context:character():faction():name() == faction_name then
+                        local slaughter_count = cm:get_saved_value("wh_main_ritual_chs_sarth_gods_count");
+                        if slaughter_count == nil then slaughter_count = 0 end
+                        
+                        slaughter_count = slaughter_count + 1;
+                        
+                        cm:set_saved_value("wh_main_ritual_chs_sarth_gods_count", slaughter_count);
+                        
+                        return slaughter_count >= 10;
+                    end
+				end,
+			["faction_name"] = "wh_main_chs_chaos_separatists"
+        },		
+		
+		--Storms
+		--build wh_main_horde_chaos_magic_2
+		{
+			["subculture"] = "wh_main_sc_chs_chaos",
+			["rite_name"] = "wh_main_ritual_chs_storms",
+			["event_name"] = "MilitaryForceBuildingCompleteEvent",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					return context:building() == "wh_main_horde_chaos_magic_2" and context:character():faction():is_human();
+					--return false;
+				end,
+			["faction_name"] = "wh_main_chs_chaos_separatists"
+		},
+		
+		--Tides
+		--LL rank 7
+		{
+			["subculture"] = "wh_main_sc_chs_chaos",
+			["rite_name"] = "wh_main_ritual_chs_tides",
+			["event_name"] = "CharacterRankUp",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local character = context:character();
+					
+					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
+				end,
+			["faction_name"] = "wh_main_chs_chaos_separatists"
+		},
+		
+		--Cults
+		--raze five cities
+		
+		{
+			["subculture"] = "wh_main_sc_chs_chaos",
+			["rite_name"] = "wh_main_ritual_chs_cults",
+			["event_name"] = "CharacterRazedSettlement",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+						
+				local raze_count = cm:get_saved_value("wh_main_ritual_chs_sarth_cults_count");
+					if raze_count == nil then raze_count = 0 end
+					if context:character():faction():name() == faction_name then
+						raze_count = raze_count + 1;
+						cm:set_saved_value("wh_main_ritual_chs_sarth_cults_count", raze_count);
+					end
+					
+					return raze_count >= 5
+				
+				
+				end,
+			["faction_name"] = "wh_main_chs_chaos_separatists"
+		},		
 		
 		
 		---BRETONNIA---
@@ -1229,7 +1399,210 @@ function owr_rite_unlock_listeners()
 					
 					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
 				end
-		}		
+		},
+		
+		--NORSCA
+
+		--Kharnath
+		--execute 10 sets of prisoners
+		{
+            ["subculture"] = "wh_main_sc_nor_norsca",
+            ["rite_name"] = "wh_main_ritual_nor_men",
+            ["event_name"] = "CharacterPostBattleSlaughter",
+            ["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+                    if context:character():faction():name() == faction_name then
+                        local slaughter_count = cm:get_saved_value("wh_main_ritual_nor_men_count");
+                        if slaughter_count == nil then slaughter_count = 0 end
+                        
+                        slaughter_count = slaughter_count + 1;
+                        
+                        cm:set_saved_value("wh_main_ritual_nor_men_count", slaughter_count);
+                        
+                        return slaughter_count >= 10;
+                    end
+                end,
+				["faction_name"] = "wh_dlc08_nor_wintertooth"
+		},
+		
+		--Mermedus
+		--level 5 main settlement
+
+		{
+			["subculture"] = "wh_main_sc_nor_norsca",
+			["rite_name"] = "wh_main_ritual_nor_ships",
+			["event_name"] = "BuildingCompleted",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local building = context:building();
+					
+					return building:faction():name() == faction_name and (building:name() == "wh_main_nor_settlement_major_5" or building:name() == "wh_main_nor_settlement_major_5_coast");
+				end,
+				["faction_name"] = "wh_dlc08_nor_wintertooth"
+		},
+		{
+			["subculture"] = "wh_main_sc_nor_norsca",
+			["rite_name"] = "wh_main_ritual_nor_ships",
+			["event_name"] = "GarrisonOccupiedEvent",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local region = context:garrison_residence():region();
+					
+					return context:character():faction():name() == faction_name and (region:building_exists("wh_main_nor_settlement_major_5") or region:building_exists("wh_main_nor_settlement_major_5_coast"));
+				end,
+				["faction_name"] = "wh_dlc08_nor_wintertooth"
+		},
+
+		--Shornaal
+		--raze 5 settlements, dawg
+
+		{
+            ["subculture"] = "wh_main_sc_nor_norsca",
+            ["rite_name"] = "wh_main_ritual_nor_goods",
+            ["event_name"] = "CharacterRazedSettlement",
+            ["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+                
+                    if context:character():faction():name() == faction_name then
+                
+                        local raze_count = cm:get_saved_value("wh_main_ritual_nor_goods_count");
+                        if raze_count == nil then raze_count = 0 end
+                        raze_count = raze_count + 1;
+                        cm:set_saved_value("wh_main_ritual_nor_goods_count", raze_count);
+                
+                        return raze_count >= 5
+                    end
+                    return false; 
+                
+                end,
+				["faction_name"] = "wh_dlc08_nor_wintertooth"
+		},
+
+		--Troll-King
+		--level 7 faction leader, dawg
+		{
+			["subculture"] = "wh_main_sc_nor_norsca",
+			["rite_name"] = "wh_main_ritual_nor_throgg",
+			["event_name"] = "CharacterRankUp",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local character = context:character();
+					
+					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
+				end,
+			["faction_name"] = "wh_dlc08_nor_wintertooth"
+		},
+		
+		--Kharnath
+		--execute 10 sets of prisoners
+		{
+            ["subculture"] = "wh_main_sc_nor_norsca",
+            ["rite_name"] = "wh_main_ritual_nor_men",
+            ["event_name"] = "CharacterPostBattleSlaughter",
+            ["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+                    if context:character():faction():name() == faction_name then
+                        local slaughter_count = cm:get_saved_value("wh_main_ritual_nor_men_count");
+                        if slaughter_count == nil then slaughter_count = 0 end
+                        
+                        slaughter_count = slaughter_count + 1;
+                        
+                        cm:set_saved_value("wh_main_ritual_nor_men_count", slaughter_count);
+                        
+                        return slaughter_count >= 10;
+                    end
+                end,
+				["faction_name"] = "wh_dlc08_nor_norsca"
+		},
+		
+		--Mermedus
+		--level 5 main settlement
+
+		{
+			["subculture"] = "wh_main_sc_nor_norsca",
+			["rite_name"] = "wh_main_ritual_nor_ships",
+			["event_name"] = "BuildingCompleted",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local building = context:building();
+					
+					return building:faction():name() == faction_name and (building:name() == "wh_main_nor_settlement_major_5" or building:name() == "wh_main_nor_settlement_major_5_coast");
+				end,
+				["faction_name"] = "wh_dlc08_nor_norsca"
+		},
+		{
+			["subculture"] = "wh_main_sc_nor_norsca",
+			["rite_name"] = "wh_main_ritual_nor_ships",
+			["event_name"] = "GarrisonOccupiedEvent",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local region = context:garrison_residence():region();
+					
+					return context:character():faction():name() == faction_name and (region:building_exists("wh_main_nor_settlement_major_5") or region:building_exists("wh_main_nor_settlement_major_5_coast"));
+				end,
+				["faction_name"] = "wh_dlc08_nor_norsca"
+		},
+
+		--Shornaal
+		--raze 5 settlements, dawg
+
+		{
+            ["subculture"] = "wh_main_sc_nor_norsca",
+            ["rite_name"] = "wh_main_ritual_nor_goods",
+            ["event_name"] = "CharacterRazedSettlement",
+            ["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+                
+                    if context:character():faction():name() == faction_name then
+                
+                        local raze_count = cm:get_saved_value("wh_main_ritual_nor_goods_count");
+                        if raze_count == nil then raze_count = 0 end
+                        raze_count = raze_count + 1;
+                        cm:set_saved_value("wh_main_ritual_nor_goods_count", raze_count);
+                
+                        return raze_count >= 5
+                    end
+                    return false; 
+                
+                end,
+				["faction_name"] = "wh_dlc08_nor_norsca"
+		},
+		--Wulfrik
+		--level 7 faction leader
+		{
+			["subculture"] = "wh_main_sc_nor_norsca",
+			["rite_name"] = "wh_main_ritual_nor_wulfrik",
+			["event_name"] = "CharacterRankUp",
+			["condition"] =
+			function(context --: WHATEVER
+				,faction_name --: string 	
+			)
+					local character = context:character();
+					
+					return character:faction():name() == faction_name and tonumber(character:rank()) >= 7;
+				end,
+				["faction_name"] = "wh_dlc08_nor_norsca"
+		}
+
+
 	
 	}--:vector<{subculture: string, rite_name: string, event_name: string, condition: function(context: WHATEVER, faction_name: string) --> boolean, faction_name: string?}>
 	
