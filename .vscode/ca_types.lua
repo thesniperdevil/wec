@@ -433,6 +433,7 @@
 --# assume global is_table: function(arg: table) --> boolean
 --# assume global is_number: function(arg: number) --> boolean
 --# assume global is_function: function(arg: function) --> boolean
+--# assume global is_boolean: function(arg: boolean) --> boolean
 --# assume global get_timestamp: function() --> string
 --# assume global script_error: function(msg: string)
 --# assume global to_number: function(n: any) --> number
