@@ -881,22 +881,28 @@ local isabella_quests = {
 
 local tyrion_quests = {
     "wh2_main_anc_weapon_sunfang",
-    "wh2_main_anc_armour_dragon_armour_of_aenarion"
+    "wh2_main_anc_armour_dragon_armour_of_aenarion",
+    "wh2_main_anc_enchanted_item_heart_of_avelorn"
 }--: vector<string>
 
 local teclis_quests = {
     "wh2_main_anc_weapon_sword_of_teclis",
-    "wh2_main_anc_arcane_item_war_crown_of_saphery"
+    "wh2_main_anc_arcane_item_war_crown_of_saphery",
+    "wh2_main_anc_arcane_item_moon_staff_of_lileath",
+    "wh2_main_anc_arcane_item_scroll_of_hoeth"
 }--: vector<string>
 
 local malekith_quests = {
     "wh2_main_anc_weapon_destroyer", 
     "wh2_main_anc_arcane_item_circlet_of_iron",
-    "wh2_main_anc_armour_supreme_spellshield"
+    "wh2_main_anc_armour_supreme_spellshield",
+    "wh2_main_anc_armour_armour_of_midnight"
 }--: vector<string>
 
 local morathi_quests = {
-    "wh2_main_anc_weapon_heartrender_and_the_darksword"
+    "wh2_main_anc_weapon_heartrender_and_the_darksword",
+    "wh2_main_anc_arcane_item_wand_of_the_kharaidon",
+    "wh2_main_anc_talisman_amber_amulet"
 }--: vector<string>
 
 local mazdamundi_quests = {
@@ -932,7 +938,7 @@ local throgg_quests = {
 }--: vector<string>
 
 local alith_anar_quests = {
-    --"wh2_dlc10_anc_talisman_stone_of_midnight",
+    "wh2_dlc10_anc_talisman_stone_of_midnight",
     "wh2_dlc10_anc_weapon_moonbow"
 }--: vector<string>
 local alarielle_quests = {
