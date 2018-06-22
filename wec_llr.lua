@@ -981,7 +981,7 @@ local vanilla_lords = {
     {faction = "wh2_main_hef_avelorn", forename = "names_name_898828143", surname = "", subtype = "wh2_dlc10_hef_alarielle", quests = alarielle_quests},
     {faction = "wh_dlc08_nor_wintertooth", forename = "names_name_346878492", subtype = "wh_dlc08_nor_throgg", surname = "",quests = throgg_quests },
     {faction = "wh_dlc08_nor_norsca", forename = "names_name_981430255", surname = "names_name_791685155", subtype = "wh_dlc08_nor_wulfrik", quests = wulfrik_quests },
-    {subtype = "wh2_dlc10_def_crone_hellebron", forename = "names_name_2120138303", surname = "", faction = "wh2_main_def_har_ganeth", quests = hellebron_quests},
+    {subtype = "wh2_dlc10_def_crone_hellebron", forename = "names_name_608740515", surname = "", faction = "wh2_main_def_har_ganeth", quests = hellebron_quests},
     {faction = "wh2_main_hef_nagarythe", subtype = "wh2_dlc10_hef_alith_anar", forename = "names_name_1829581114", surname = "", quests = alith_anar_quests}
     
 
