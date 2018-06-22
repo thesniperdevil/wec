@@ -430,6 +430,7 @@ function llr_lord.respec_char_with_army(self, faction, character)
                 --now, we set the self.spawn_string to the string we assembled.
                 --we cannot do this directly in the way that you would increment a variable a = a + 1 because in lua strings are immutable.
                 next_string = self.spawn_string..","..self.army_list[k]     
+                self.spawn_string = next_string
             end
         end
         LLRLOG("Assembled spawn string as ["..self.spawn_string.."] ")
