@@ -327,10 +327,17 @@ function llr_lord.respec_char_with_army(self, faction, character)
         self.spawn_string = ""
         --the first "unit" in every army is the general himself. 
         --so we're going to start this loop at #2 because otherwise we might end up with two lords!
+
+        --failsafe for heroes
+
         for k = 2, #self.army_list do
             --we define the next string as a variable.
             --we insert the comma to conform to the unit_spawn_list_string format that CA uses.
-            next_string = self.spawn_string..","..self.army_list[k]
+            if string.find(self.army_list[k], "_cha_") then
+                LLRLOG("Skipping ["..self.army_list[k].."] because it is a character")
+            else
+                next_string = self.spawn_string..","..self.army_list[k]
+            end
             --now, we set the self.spawn_string to the string we assembled.
             --we cannot do this directly in the way that you would increment a variable a = a + 1 because in lua strings are immutable.
             self.spawn_string = next_string
