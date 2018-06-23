@@ -122,13 +122,13 @@ function llr_lord.new(subtype, forename, surname, originating_faction)
  
     --these add the args we gave as the fields/properties of the object. 
     self.has_quest_set = false --:boolean
-    self.quest_ancilaries = {} --:vector<string>
+    self.quest_ancilaries = {} --:vector<{string, number}>
     self.has_immortal_trait_set = false --: boolean
     self.immortal_trait = nil --:string
     self.no_check = false --: boolean
     --quests won't re-trigger if the AI has already completed them, so we're going to have to reset them manually.
 
-
+    self.exp_level = nil --:integer
 
     self.safety_abort = false
 
@@ -202,7 +202,7 @@ end
 
 --this method is a mutator, or a setter. 
 --it adds data to the model
---v function(self: LLR_LORD, quest_table: vector<string>)
+--v function(self: LLR_LORD, quest_table: vector<{string, number}>)
 function llr_lord.add_quest(self, quest_table)
     if not tostring(self) == "llr_lord" then
         WEC_ERROR("method #llr_lord.add_quest(self, quest_table)# not applied to a correct object!")
@@ -278,14 +278,105 @@ end
 
 --v function(self: LLR_LORD, cqi: CA_CQI)
 function llr_lord.grant_quest_items(self, cqi)
-    LLRLOG("Resetting quest saved values!")
+    LLRLOG("Granting quest items!")
     --run through our list of quest saved values
     if self:has_quests() then
         for i = 1, #self.quest_ancilaries do
-            cm:force_add_and_equip_ancillary(cm:char_lookup_str(cqi), self.quest_ancilaries[i])
+            if self.exp_level >= self.quest_ancilaries[i][2] then
+                cm:force_add_and_equip_ancillary(cm:char_lookup_str(cqi), self.quest_ancilaries[i][1])
+            else
+                LLRLOG("Legendary lord is not sufficiently high level to aquire the current quest item!")
+            end
         end
     end
 
+end
+
+
+--v function(self: LLR_LORD, faction: string, character: CA_CHAR)
+function llr_lord.respec_wounded_lord(self, faction, character)
+    local exp_to_levels_table = {
+        0, 900,  1900,  3000, 4200,  5500,6870, 8370, 9940,
+        11510,13080,14660, 16240,17820,19400, 20990,22580,24170,25770,27370,28980,30590,32210,
+        33830,35460,37100,38740, 40390,42050,43710,45380,47060,48740,50430,52130, 53830, 55540,57260,58990,
+        60730, 60730, 60730, 60730,  60730, 60730, 60730, 60730, 60730,  60730, 60730, 60730,
+        60730 }--:vector<number>
+
+    --this long ass list is just a list of exp quantities to level.
+    --we add a bunch of extras on the end to compat with extra level mods. 
+
+    --first, we need to note some information about the old character.
+    self.exp_level = character:rank() 
+    --we are going to use the home settlement for our x and y. 
+    self.x = cm:get_faction(faction):home_region():settlement():logical_position_x() + 1;
+    self.y = cm:get_faction(faction):home_region():settlement():logical_position_y() - 1;
+    self.region = cm:get_faction(faction):home_region():name()
+    --now we need to kill the old, wounded lord.
+    --we need to prevent the message from showing up in the event feed.
+    cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
+    --now, we need to strip immortality from the character
+    cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
+
+    if self:has_immortal_trait() == true then
+        cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), self.immortal_trait)
+    end
+
+    --finally, we kill him.
+    cm:kill_character(character:command_queue_index(), false, true)
+    --turn message back on on a callback.
+    cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
+
+    local army_list = cm:get_faction(faction):military_force_list()
+    local army = army_list:item_at(0):unit_list()
+
+    self.army_list = {} --:vector<string>
+
+    for j = 0, army:num_items() - 1 do
+        local current_unit = army:item_at(j):unit_key()
+
+        table.insert(self.army_list, current_unit)
+
+    end
+
+    self.spawn_string = ""
+
+    for k = 2, #self.army_list do
+
+        next_string = self.spawn_string..","..self.army_list[k]
+
+        self.spawn_string = next_string
+    end
+    cm:create_force_with_general(
+        faction,
+        self.spawn_string,
+        self.region,
+        self.x,
+        self.y,
+        "general",
+        self.subtype,
+        self.forename,
+        "",
+        self.surname,
+        "",
+        false,
+        function(cqi) 
+            LLRLOG("Levelling up the respec'd lord!")
+            cm:set_character_immortality(cm:char_lookup_str(cqi), true);
+            self:grant_quest_items(cqi)
+            self.cqi = cqi
+            --this makes sure our shiny new lord is immortal.
+            cm:add_agent_experience(cm:char_lookup_str(cqi), exp_to_levels_table[self.exp_level])
+            --this references our exp table at the top of this function.
+            
+            --we want this lord to be wounded, however, he also has a random ass army
+            --[[
+
+            ]]--
+        end)
+        cm:callback(function()
+            LLRLOG(tostring(self.cqi))
+            cm:kill_character(self.cqi, true, true)
+        end, 2);
 end
 
 --v function(self: LLR_LORD, faction: string, character: CA_CHAR)
@@ -313,7 +404,7 @@ function llr_lord.respec_char_with_army(self, faction, character)
         
 
         --first, we need to store the army list.
-        self.army_list = {} --:vector<string>
+        self.army_list = {}
         --first we define an empty table to store it in.
         --notice we use j in this loop because i is already taken.
         for j = 0, character:military_force():unit_list():num_items() - 1 do
@@ -327,15 +418,26 @@ function llr_lord.respec_char_with_army(self, faction, character)
         self.spawn_string = ""
         --the first "unit" in every army is the general himself. 
         --so we're going to start this loop at #2 because otherwise we might end up with two lords!
+
+        --failsafe for heroes
+
         for k = 2, #self.army_list do
             --we define the next string as a variable.
             --we insert the comma to conform to the unit_spawn_list_string format that CA uses.
-            next_string = self.spawn_string..","..self.army_list[k]
-            --now, we set the self.spawn_string to the string we assembled.
-            --we cannot do this directly in the way that you would increment a variable a = a + 1 because in lua strings are immutable.
-            self.spawn_string = next_string
+            if string.find(self.army_list[k], "_cha_") then
+                LLRLOG("Skipping ["..self.army_list[k].."] because it is a character")
+            else
+                --now, we set the self.spawn_string to the string we assembled.
+                --we cannot do this directly in the way that you would increment a variable a = a + 1 because in lua strings are immutable.
+                next_string = self.spawn_string..","..self.army_list[k]     
+                self.spawn_string = next_string
+            end
         end
         LLRLOG("Assembled spawn string as ["..self.spawn_string.."] ")
+        if self.spawn_string == "" then
+            self:respec_wounded_lord(faction, character)
+            return
+        end
 
         --now, get the exp level of the character
         self.exp_level = character:rank() 
@@ -406,91 +508,6 @@ function llr_lord.respec_char_with_army(self, faction, character)
 
 end
 
---v function(self: LLR_LORD, faction: string, character: CA_CHAR)
-function llr_lord.respec_wounded_lord(self, faction, character)
-    local exp_to_levels_table = {
-        0, 900,  1900,  3000, 4200,  5500,6870, 8370, 9940,
-      11510,13080,14660, 16240,17820,19400, 20990,22580,24170,25770,27370,28980,30590,32210,
-      33830,35460,37100,38740, 40390,42050,43710,45380,47060,48740,50430,52130, 53830, 55540,57260,58990,
-      60730, 60730, 60730, 60730,  60730, 60730, 60730, 60730, 60730,  60730, 60730, 60730,
-      60730 }--:vector<number>
-
-    --this long ass list is just a list of exp quantities to level.
-    --we add a bunch of extras on the end to compat with extra level mods. 
-
-    --first, we need to note some information about the old character.
-    self.exp_level = character:rank() 
-    --we are going to use the home settlement for our x and y. 
-    self.x = cm:get_faction(faction):home_region():settlement():logical_position_x() + 1;
-    self.y = cm:get_faction(faction):home_region():settlement():logical_position_y() - 1;
-    self.region = cm:get_faction(faction):home_region():name()
-    --now we need to kill the old, wounded lord.
-    --we need to prevent the message from showing up in the event feed.
-    cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
-    --now, we need to strip immortality from the character
-    cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
-
-    if self:has_immortal_trait() == true then
-        cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), self.immortal_trait)
-    end
-
-    --finally, we kill him.
-    cm:kill_character(character:command_queue_index(), false, true)
-    --turn message back on on a callback.
-    cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
-
-    local army_list = cm:get_faction(faction):military_force_list()
-    local army = army_list:item_at(0):unit_list()
-
-    self.army_list = {} 
-
-    for j = 0, army:num_items() - 1 do
-        local current_unit = army:item_at(j):unit_key()
-
-        table.insert(self.army_list, current_unit)
-
-    end
-
-    self.spawn_string = ""
-
-    for k = 2, #self.army_list do
-
-        next_string = self.spawn_string..","..self.army_list[k]
-
-        self.spawn_string = next_string
-    end
-    cm:create_force_with_general(
-        faction,
-        self.spawn_string,
-        self.region,
-        self.x,
-        self.y,
-        "general",
-        self.subtype,
-        self.forename,
-        "",
-        self.surname,
-        "",
-        false,
-        function(cqi) 
-            LLRLOG("Levelling up the respec'd lord!")
-            cm:set_character_immortality(cm:char_lookup_str(cqi), true);
-            self:grant_quest_items(cqi)
-            self.cqi = cqi
-            --this makes sure our shiny new lord is immortal.
-            cm:add_agent_experience(cm:char_lookup_str(cqi), exp_to_levels_table[self.exp_level])
-            --this references our exp table at the top of this function.
-            
-            --we want this lord to be wounded, however, he also has a random ass army
-            --[[
-
-            ]]--
-        end)
-        cm:callback(function()
-            LLRLOG(tostring(self.cqi))
-            cm:kill_character(self.cqi, true, true)
-        end, 2);
-end
 
 
 
@@ -775,175 +792,185 @@ llr:activate() --activate our manager.
 
 --these are all quest tables, copied from CA. 
 local karl_franz_quests = {
-    "wh_main_anc_weapon_the_reikland_runefang",
-    "wh_main_anc_weapon_ghal_maraz",
-    "wh_main_anc_talisman_the_silver_seal"
-}--: vector<string>
+    {"wh_main_anc_weapon_the_reikland_runefang", 8},
+    {"wh_main_anc_weapon_ghal_maraz", 13},
+    {"wh_main_anc_talisman_the_silver_seal", 18}
+}--: vector<{string, number}>
 
 local balthasar_gelt_quests = {
-    "wh_main_anc_enchanted_item_cloak_of_molten_metal",
-    "wh_main_anc_talisman_amulet_of_sea_gold",
-    "wh_main_anc_arcane_item_staff_of_volans",
-}--: vector<string>
+    {"wh_main_anc_enchanted_item_cloak_of_molten_metal", 8},
+    {"wh_main_anc_talisman_amulet_of_sea_gold", 13},
+    {"wh_main_anc_arcane_item_staff_of_volans", 18}
+}--: vector<{string, number}>
 
 local volkmar_the_grim_quests = {
-    "wh_dlc04_anc_talisman_jade_griffon"
-}--: vector<string>
+    {"wh_dlc04_anc_talisman_jade_griffon", 8},
+    {"wh_dlc04_anc_weapon_staff_of_command", 13}
+}--: vector<{string, number}>
 
 local thorgrim_grudgebearer_quests = {
-    "wh_main_anc_weapon_the_axe_of_grimnir", 
-    "wh_main_anc_armour_the_armour_of_skaldour", 
-    "wh_main_anc_talisman_the_dragon_crown_of_karaz",
-    "wh_main_anc_enchanted_item_the_great_book_of_grudges"
-}--: vector<string>
+    {"wh_main_anc_weapon_the_axe_of_grimnir", 8}, 
+    {"wh_main_anc_armour_the_armour_of_skaldour", 13}, 
+    {"wh_main_anc_talisman_the_dragon_crown_of_karaz", 18},
+    {"wh_main_anc_enchanted_item_the_great_book_of_grudges", 23}}--: vector<{string, number}>
 
-local ungrim_ironfist_quests = { "wh_main_anc_armour_the_slayer_crown", "wh_main_anc_talisman_dragon_cloak_of_fyrskar", "wh_main_anc_weapon_axe_of_dargo"}--: vector<string>
+local ungrim_ironfist_quests = {
+    {"wh_main_anc_armour_the_slayer_crown", 8},
+    {"wh_main_anc_talisman_dragon_cloak_of_fyrskar", 13}, 
+    {"wh_main_anc_weapon_axe_of_dargo", 18}
+}--: vector<{string, number}>
 
 local grombrindal_quests = {
-"wh_pro01_dwf_grombrindal_amour_of_glimril_scales", 
-"wh_pro01_dwf_grombrindal_rune_axe_of_grombrindal",
-"wh_pro01_dwf_grombrindal_rune_cloak_of_valaya",
-"wh_pro01_dwf_grombrindal_rune_helm_of_zhufbar"
-}--: vector<string>
+{"wh_pro01_dwf_grombrindal_amour_of_glimril_scales", 8}, 
+{"wh_pro01_dwf_grombrindal_rune_axe_of_grombrindal", 13},
+{"wh_pro01_dwf_grombrindal_rune_cloak_of_valaya", 18},
+{"wh_pro01_dwf_grombrindal_rune_helm_of_zhufbar", 23}
+}--: vector<{string, number}>
 
 local grimgor_ironhide_quests = {
-    "wh_main_anc_weapon_gitsnik", 
-    "wh_main_anc_armour_blood-forged_armour"
-}--: vector<string>
+    {"wh_main_anc_weapon_gitsnik", 8}, 
+    {"wh_main_anc_armour_blood-forged_armour", 13}
+}--: vector<{string, number}>
 
 local azhag_the_slaughterer_quests = {
-    "wh_main_anc_enchanted_item_the_crown_of_sorcery",
-    "wh_main_anc_armour_azhags_ard_armour",
-    "wh_main_anc_weapon_slaggas_slashas"
-}--: vector<string>
+    {"wh_main_anc_enchanted_item_the_crown_of_sorcery", 8},
+    {"wh_main_anc_armour_azhags_ard_armour", 13},
+    {"wh_main_anc_weapon_slaggas_slashas", 18}}--: vector<{string, number}>
 
 local mannfred_von_carstein_quests = {
-    "wh_main_anc_weapon_sword_of_unholy_power",
-    "wh_main_anc_armour_armour_of_templehof"
-}--: vector<string>
+    {"wh_main_anc_weapon_sword_of_unholy_power", 8},
+    {"wh_main_anc_armour_armour_of_templehof", 13}
+}--: vector<{string, number}>
 
 local heinrich_kemmler_quests = {
-    "wh_main_anc_weapon_chaos_tomb_blade",
-    "wh_main_anc_enchanted_item_cloak_of_mists_and_shadows", 
-    "wh_main_anc_arcane_item_skull_staff"
-}--: vector<string>
+    {"wh_main_anc_weapon_chaos_tomb_blade", 8},
+    {"wh_main_anc_enchanted_item_cloak_of_mists_and_shadows", 13}, 
+    {"wh_main_anc_arcane_item_skull_staff", 18}
+}--: vector<{string, number}>
 
 local vlad_von_carstein_quests = {
-    "wh_dlc04_anc_weapon_blood_drinker", 
-    "wh_dlc04_anc_talisman_the_carstein_ring"
-}--: vector<string>
+    {"wh_dlc04_anc_weapon_blood_drinker", 8}, 
+    {"wh_dlc04_anc_talisman_the_carstein_ring", 13}
+}--: vector<{string, number}>
 
 local helman_ghorst_quests = {
-    "wh_dlc04_anc_arcane_item_the_liber_noctus"
-}--: vector<string>
+    {"wh_dlc04_anc_arcane_item_the_liber_noctus", 8}
+}--: vector<{string, number}>
 
 
 local belegar_quests = {
-    "wh_dlc06_anc_armour_shield_of_defiance",
-    "wh_dlc06_anc_weapon_the_hammer_of_angrund"
-}--: vector<string>
+    {"wh_dlc06_anc_armour_shield_of_defiance", 8},
+    {"wh_dlc06_anc_weapon_the_hammer_of_angrund", 13}
+}--: vector<{string, number}>
 
 local skarsnik_quests = {
-    "wh_dlc06_anc_weapon_skarsniks_prodder"
-}--: vector<string>
+    {"wh_dlc06_anc_weapon_skarsniks_prodder", 8}
+}--: vector<{string, number}>
 
 local wurrzag_quests = {
-    "wh_dlc06_anc_enchanted_item_baleful_mask",
-    "wh_dlc06_anc_arcane_item_squiggly_beast", 
-    "wh_dlc06_anc_weapon_bonewood_staff"
-}--: vector<string>
+    {"wh_dlc06_anc_enchanted_item_baleful_mask", 8},
+    {"wh_dlc06_anc_arcane_item_squiggly_beast", 13}, 
+    {"wh_dlc06_anc_weapon_bonewood_staff", 18}
+}--: vector<{string, number}>
 
 local orion_quests = {
-    "wh_dlc05_anc_enchanted_item_horn_of_the_wild_hunt",
-    "wh_dlc05_anc_talisman_cloak_of_isha", 
-    "wh_dlc05_anc_weapon_spear_of_kurnous"
-}--: vector<string>
+    {"wh_dlc05_anc_enchanted_item_horn_of_the_wild_hunt", 8},
+    {"wh_dlc05_anc_talisman_cloak_of_isha", 13}, 
+    {"wh_dlc05_anc_weapon_spear_of_kurnous", 18}
+}--: vector<{string, number}>
 
 local durthu_quests = {
-    "wh_dlc05_anc_weapon_daiths_sword"
-}--: vector<string>
+    {"wh_dlc05_anc_weapon_daiths_sword", 8}
+}--: vector<{string, number}>
 
 local fay_enchantress_quests = {
-    "wh_dlc07_anc_arcane_item_the_chalice_of_potions"
-}--: vector<string>
+    {"wh_dlc07_anc_arcane_item_the_chalice_of_potions", 9}
+}--: vector<{string, number}>
 
 local alberic_quests = {
-"wh_dlc07_anc_weapon_trident_of_manann"
-}--: vector<string>
+{"wh_dlc07_anc_weapon_trident_of_manann", 3}
+}--: vector<{string, number}>
 
 local louen_quests = {
-"wh_main_anc_weapon_the_sword_of_couronne"
-}--: vector<string>
+{"wh_main_anc_weapon_the_sword_of_couronne", 9}
+}--: vector<{string, number}>
 
 local isabella_quests = {
-    "wh_pro02_anc_enchanted_item_blood_chalice_of_bathori"
-}--: vector<string>
+    {"wh_pro02_anc_enchanted_item_blood_chalice_of_bathori", 8}
+}--: vector<{string, number}>
 
 local tyrion_quests = {
-    "wh2_main_anc_weapon_sunfang",
-    "wh2_main_anc_armour_dragon_armour_of_aenarion"
-}--: vector<string>
+    {"wh2_main_anc_weapon_sunfang", 10},
+    {"wh2_main_anc_armour_dragon_armour_of_aenarion", 6},
+    {"wh2_main_anc_enchanted_item_heart_of_avelorn", 0}
+}--: vector<{string, number}>
 
 local teclis_quests = {
-    "wh2_main_anc_weapon_sword_of_teclis",
-    "wh2_main_anc_arcane_item_war_crown_of_saphery"
-}--: vector<string>
+    {"wh2_main_anc_weapon_sword_of_teclis", 10},
+    {"wh2_main_anc_arcane_item_war_crown_of_saphery", 6},
+    {"wh2_main_anc_arcane_item_moon_staff_of_lileath", 0},
+    {"wh2_main_anc_arcane_item_scroll_of_hoeth", 0}
+}--: vector<{string, number}>
 
 local malekith_quests = {
-    "wh2_main_anc_weapon_destroyer", 
-    "wh2_main_anc_arcane_item_circlet_of_iron",
-    "wh2_main_anc_armour_supreme_spellshield"
-}--: vector<string>
+    {"wh2_main_anc_weapon_destroyer", 10}, 
+    {"wh2_main_anc_arcane_item_circlet_of_iron", 6},
+    {"wh2_main_anc_armour_supreme_spellshield", 14},
+    {"wh2_main_anc_armour_armour_of_midnight", 0}
+} --: vector<{string, number}>
 
 local morathi_quests = {
-    "wh2_main_anc_weapon_heartrender_and_the_darksword"
-}--: vector<string>
+    {"wh2_main_anc_weapon_heartrender_and_the_darksword", 6},
+    {"wh2_main_anc_arcane_item_wand_of_the_kharaidon", 0},
+    {"wh2_main_anc_talisman_amber_amulet", 0}
+}--: vector<{string, number}>
 
 local mazdamundi_quests = {
-    "wh2_main_anc_weapon_cobra_mace_of_mazdamundi",
-    "wh2_main_anc_magic_standard_sunburst_standard_of_hexoatl"
-}--: vector<string>
+    {"wh2_main_anc_weapon_cobra_mace_of_mazdamundi", 10},
+    {"wh2_main_anc_magic_standard_sunburst_standard_of_hexoatl", 6}
+}--: vector<{string, number}>
 
 local kroq_gar_quests = {
-    "wh2_main_anc_enchanted_item_hand_of_gods",
-    "wh2_main_anc_weapon_revered_spear_of_tlanxla"
-}--: vector<string>
+    {"wh2_main_anc_enchanted_item_hand_of_gods", 10},
+    {"wh2_main_anc_weapon_revered_spear_of_tlanxla", 6}
+}--: vector<{string, number}>
 
 local skrolk_quests = {
-    "wh2_main_anc_weapon_rod_of_corruption",
-    "wh2_main_anc_arcane_item_the_liber_bubonicus"
-}--: vector<string>	
+    {"wh2_main_anc_weapon_rod_of_corruption", 10},
+    {"wh2_main_anc_arcane_item_the_liber_bubonicus", 6}
+}--: vector<{string, number}>	
 
 local queek_headtaker_quests = {
-    "wh2_main_anc_armour_warp_shard_armour",
-    "wh2_main_anc_weapon_dwarf_gouger"
-}--: vector<string>
+    {"wh2_main_anc_armour_warp_shard_armour", 6},
+    {"wh2_main_anc_weapon_dwarf_gouger", 10}
+}--: vector<{string, number}>
 
 local tretch_craventail_quests = {
-    "wh2_dlc09_anc_enchanted_item_lucky_skullhelm"
-}--: vector<string>
+    {"wh2_dlc09_anc_enchanted_item_lucky_skullhelm", 8}
+}--: vector<{string, number}>
 
 local wulfrik_quests = {
-"wh_dlc08_anc_weapon_sword_of_torgald"
-}--: vector<string>
+    {"wh_dlc08_anc_weapon_sword_of_torgald", 9}
+}--: vector<{string, number}>
 
 local throgg_quests = {
-    "wh_dlc08_anc_talisman_wintertooth_crown"
-}--: vector<string>
+    {"wh_dlc08_anc_talisman_wintertooth_crown", 9}
+}--: vector<{string, number}>
 
 local alith_anar_quests = {
-    --"wh2_dlc10_anc_talisman_stone_of_midnight",
-    "wh2_dlc10_anc_weapon_moonbow"
-}--: vector<string>
+    {"wh2_dlc10_anc_talisman_stone_of_midnight", 0},
+    {"wh2_dlc10_anc_weapon_moonbow", 5}
+}--: vector<{string, number}>
 local alarielle_quests = {
-"wh2_dlc10_anc_talisman_shieldstone_of_isha",
-"wh2_dlc10_anc_enchanted_item_star_of_avelorn"
-}--: vector<string>
+    {"wh2_dlc10_anc_talisman_shieldstone_of_isha", 2},
+    {"wh2_dlc10_anc_enchanted_item_star_of_avelorn", 15}
+}--: vector<{string, number}>
 
 local hellebron_quests = {
-"wh2_dlc10_anc_weapon_deathsword_and_the_cursed_blade",
-"wh2_dlc10_anc_talisman_amulet_of_dark_fire"
-}--: vector<string>
+    {"wh2_dlc10_anc_weapon_deathsword_and_the_cursed_blade", 8},
+    {"wh2_dlc10_anc_talisman_amulet_of_dark_fire", 15}
+}--: vector<{string, number}>
+
 
 
 local vanilla_lords = {
@@ -981,11 +1008,11 @@ local vanilla_lords = {
     {faction = "wh2_main_hef_avelorn", forename = "names_name_898828143", surname = "", subtype = "wh2_dlc10_hef_alarielle", quests = alarielle_quests},
     {faction = "wh_dlc08_nor_wintertooth", forename = "names_name_346878492", subtype = "wh_dlc08_nor_throgg", surname = "",quests = throgg_quests },
     {faction = "wh_dlc08_nor_norsca", forename = "names_name_981430255", surname = "names_name_791685155", subtype = "wh_dlc08_nor_wulfrik", quests = wulfrik_quests },
-    {subtype = "wh2_dlc10_def_crone_hellebron", forename = "names_name_2120138303", surname = "", faction = "wh2_main_def_har_ganeth", quests = hellebron_quests},
+    {subtype = "wh2_dlc10_def_crone_hellebron", forename = "names_name_608740515", surname = "", faction = "wh2_main_def_har_ganeth", quests = hellebron_quests},
     {faction = "wh2_main_hef_nagarythe", subtype = "wh2_dlc10_hef_alith_anar", forename = "names_name_1829581114", surname = "", quests = alith_anar_quests}
     
 
-}--:vector<{faction: string, forename: string, surname: string, subtype: string, quests: vector<string>}>
+}--:vector<{faction: string, forename: string, surname: string, subtype: string, quests: vector<{string, number}>}>
 
 
 for i = 1, #vanilla_lords do --start looping through the information we just defined.
