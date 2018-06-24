@@ -1631,7 +1631,43 @@ function owr_rite_unlock_listeners()
 			end;
 		end;
 	end;
+	local chaos_restricted_factions = {
+	"wh_dlc08_chs_chaos_challenger_khorne",
+	"wh_dlc08_chs_chaos_challenger_nurgle",
+	"wh_dlc08_chs_chaos_challenger_slaanesh",
+	"wh_dlc08_chs_chaos_challenger_tzeentch",
+	"wh_main_chs_chaos_rebels",
+	"wh_main_chs_chaos_separatists",
+	"wh2_main_chs_chaos_incursion_def",
+	"wh2_main_chs_chaos_incursion_hef",
+	"wh2_main_chs_chaos_incursion_lzd",
+	"wh2_main_chs_chaos_incursion_skv"
+	}
 
+	local empire_restricted_factions = {
+		"wh_main_emp_empire",
+		"wh_main_emp_hochland",
+		"wh_main_emp_averland",
+		"wh_main_emp_ostermark" , "wh_main_emp_stirland" ,
+		"wh_main_emp_middenland" , "wh_main_emp_nordland" , "wh_main_emp_talabecland" , "wh_main_emp_wissenland" ,
+		"wh_main_emp_ostland"
+	}
+	--wh_main_ritual_chs_storms 
+	for i = 1, #chaos_restricted_factions do
+		local current_faction = chaos_restricted_factions[i]
+		if not cm:get_faction(current_faction):is_human() then
+			cm:set_ritual_unlocked (cm:get_faction(current_faction):cqi(), "wh_main_ritual_chs_storms", false)
+		end
+	end
+
+	if cm:model():turn_number() < 30 then
+		for i = 1, #empire_restricted_factions do 
+			local current_faction = empire_restricted_factions[i]
+			if not cm:get_faction(current_faction):is_human() then
+				cm:set_ritual_unlocked (cm:get_faction(current_faction):cqi(), "wh_main_ritual_emp_gunpowder", false)
+			end
+		end
+	end
 
 end;
 
@@ -1814,5 +1850,4 @@ function wec_rites()
 	vandy_scripted_effects();
 	
 	OWRLOG("OWR INIT COMPLETE");
-	end;
-	
+end;
