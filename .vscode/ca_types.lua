@@ -371,7 +371,7 @@
 --# assume CA_REGION_MANAGER.region_by_key: method(key: string) --> CA_REGION
 
 
--- FACTION
+-- FACTIOM
 --# assume CA_FACTION.character_list: method() --> CA_CHAR_LIST
 --# assume CA_FACTION.treasury: method() --> number
 --# assume CA_FACTION.name: method() --> string
