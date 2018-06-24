@@ -427,7 +427,7 @@
 --# assume global print_all_uicomponent_children: function(component: CA_UIC)
 --# assume global is_uicomponent: function(object: any) --> boolean
 --# assume global output_uicomponent: function(uic: CA_UIC, omit_children: boolean)
---# assume global faction_is_horde: function(faction: CA_FACTION) --> boolean
+--# assume global wh_faction_is_horde: function(faction: CA_FACTION) --> boolean
 --# assume global uicomponent_to_str: function(component: CA_UIC) --> string
 --# assume global is_string: function(arg: string) --> boolean
 --# assume global is_table: function(arg: table) --> boolean
