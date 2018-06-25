@@ -96,6 +96,7 @@
 --# assume FRAME.PositionRelativeTo: method(component: WHATEVER, xDiff: number, yDiff: number)
 --# assume FRAME.Scale: method(factor: number)
 --# assume FRAME.Position: method() --> (number, number)
+--# assume FRAME.Resize: method(number, number)
 --# assume FRAME.Bounds: method() --> (number, number)
 --# assume FRAME.XPos: method() --> number
 --# assume FRAME.YPos: method() --> number
