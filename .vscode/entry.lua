@@ -6,3 +6,4 @@ require("wec_rites")
 
 --require("recruiter_controls")
 --require("wec_loreful_empires")
+require("wec_maruka_cheater")
