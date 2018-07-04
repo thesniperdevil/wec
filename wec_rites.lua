@@ -215,7 +215,75 @@ function OWR_chs_cults()
 	for i = 1, #majorcities_list do
 		cm:apply_effect_bundle_to_region("wh_main_ritual_chs_cults_corruption", majorcities_list[i], 10)
 	end;
+
 end;
+
+
+--v function(faction: CA_FACTION, ritual_key: string)
+function OWR_ai_rite_performed_event(faction, ritual_key)
+	if faction:has_home_region() then
+		local capital = faction:home_region():settlement();
+		local factions_known = faction:factions_met();
+		local culture = faction:culture();
+		local id = 820;
+		
+		
+		for i = 0, factions_known:num_items() - 1 do
+			local current_faction = factions_known:item_at(i);
+			
+			if current_faction:is_human() then
+				local current_faction_name = current_faction:name();
+				local primary_detail = "event_feed_strings_text_wh2_event_feed_string_scripted_event_ai_rite_performed_primary_detail_" .. ritual_key;
+				local ai_faction_name = "factions_screen_name_" .. faction:name()
+				local secondary_detail = "event_feed_strings_text_wh2_event_feed_string_scripted_event_ai_rite_performed_secondary_detail_" .. ritual_key;
+				
+				cm:show_message_event_located(
+					current_faction_name,
+					primary_detail,
+					ai_faction_name,
+					secondary_detail,
+					capital:logical_position_x(),
+					capital:logical_position_y(),
+					true,
+					id
+				);
+				
+			end;
+		end;
+		
+	elseif wh_faction_is_horde(faction) then
+		local factions_known = faction:factions_met();
+		local culture = faction:culture();
+		local id = 820;
+		
+		
+		for i = 0, factions_known:num_items() - 1 do
+			local current_faction = factions_known:item_at(i);
+			
+			if current_faction:is_human() then
+				local current_faction_name = current_faction:name();
+				local primary_detail = "event_feed_strings_text_wh2_event_feed_string_scripted_event_ai_rite_performed_primary_detail_" .. ritual_key;
+				local ai_faction_name = "factions_screen_name_" .. faction:name()
+				local secondary_detail = "event_feed_strings_text_wh2_event_feed_string_scripted_event_ai_rite_performed_secondary_detail_" .. ritual_key;
+				
+				cm:show_message_event(
+					current_faction_name,
+					primary_detail,
+					ai_faction_name,
+					secondary_detail,
+					true,
+					id
+				);
+				
+			end;
+		end;
+			
+	
+	end;
+end;
+
+
+
 
 
 
@@ -1632,6 +1700,45 @@ function owr_rite_unlock_listeners()
 		end;
 	end;
 
+	local chaos_restricted_factions = {
+	"wh_dlc08_chs_chaos_challenger_khorne",
+	"wh_dlc08_chs_chaos_challenger_nurgle",
+	"wh_dlc08_chs_chaos_challenger_slaanesh",
+	"wh_dlc08_chs_chaos_challenger_tzeentch",
+	"wh_main_chs_chaos_rebels",
+	"wh_main_chs_chaos_separatists",
+	"wh2_main_chs_chaos_incursion_def",
+	"wh2_main_chs_chaos_incursion_hef",
+	"wh2_main_chs_chaos_incursion_lzd",
+	"wh2_main_chs_chaos_incursion_skv"
+	}--: vector<string>
+
+	local empire_restricted_factions = {
+		"wh_main_emp_empire",
+		"wh_main_emp_hochland",
+		"wh_main_emp_averland",
+		"wh_main_emp_ostermark" , "wh_main_emp_stirland" ,
+		"wh_main_emp_middenland" , "wh_main_emp_nordland" , "wh_main_emp_talabecland" , "wh_main_emp_wissenland" ,
+		"wh_main_emp_ostland"
+	}--: vector<string>
+
+	--wh_main_ritual_chs_storms 
+	for i = 1, #chaos_restricted_factions do
+		local current_faction = chaos_restricted_factions[i]
+		if not cm:get_faction(current_faction):is_human() then
+			cm:set_ritual_unlocked (cm:get_faction(current_faction):command_queue_index(), "wh_main_ritual_chs_storms", false)
+		end
+	end
+
+	--wh_main_ritual_emp_gundpowder
+	if cm:model():turn_number() < 30 then
+		for i = 1, #empire_restricted_factions do 
+			local current_faction = empire_restricted_factions[i]
+			if not cm:get_faction(current_faction):is_human() then
+				cm:set_ritual_unlocked (cm:get_faction(current_faction):command_queue_index(), "wh_main_ritual_emp_gunpowder", false)
+			end
+		end
+	end
 
 end;
 
@@ -1686,28 +1793,9 @@ core:add_listener(
     end,
     true);
 	
---Dwarf Holds movement script	
 	
 core:add_listener(
-    "OWR_Holds_Movement",
-    "RitualCompletedEvent",
-    function(context)
-        return context:ritual():ritual_category() == "STANDARD_RITUAL";
-    end,
-    function(context)
-        local ritual = context:ritual();
-        local ritual_key = ritual:ritual_key();
-        local faction = context:performing_faction();
-        local faction_name = faction:name();
-		OWRLOG("OWR: "..tostring(faction_name).." preformed "..tostring(ritual_key).." rite");
-        if ritual_key == "wh_main_ritual_dwf_holds" then
-            dwf_holds_listeners(faction)
-        end
-    end,
-    true);
-	
-core:add_listener(
-		"IntrigueRiteListener",
+		"OWR_Intrigue_Rite",
 		"RitualCompletedEvent",
 		function(context)
 			return context:ritual():ritual_category() == "STANDARD_RITUAL";
@@ -1737,8 +1825,10 @@ core:add_listener(
 		true
 	);	
 	
+
+	
 core:add_listener(
-	"cultists",
+	"OWR_external_functions",
 	"RitualCompletedEvent",
 	function(context)
 		return context:ritual():ritual_category() == "STANDARD_RITUAL";
@@ -1749,42 +1839,21 @@ core:add_listener(
 		local faction = context:performing_faction();
 		
 		if ritual_key == "wh_main_ritual_chs_cults" then
-			df_spawn_cultists(faction:name());
-		end;
-	end,
-	true);
-	
-core:add_listener(
-	"empdilemmas",
-	"RitualCompletedEvent",
-	function(context)
-		return context:ritual():ritual_category() == "STANDARD_RITUAL";
-	end,
-	function(context)
-		local ritual = context:ritual();
-		local ritual_key = ritual:ritual_key();
-		local faction = context:performing_faction();
-		
-		if ritual_key == "wh_main_ritual_emp_policy" then
+			OWR_chs_cults();
+		elseif ritual_key == "wh_main_ritual_emp_policy" then
 			OWR_emp_policy(faction)
+		elseif ritual_key == "wh_main_ritual_chs_cults" then
+			df_spawn_cultists(faction:name());
+		elseif ritual_key == "wh_main_ritual_dwf_holds" then
+            dwf_holds_listeners(faction)
 		end;
-	end,
-	true);
-	
-core:add_listener(
-	"chs_cult_corruption",
-	"RitualCompletedEvent",
-	function(context)
-		return context:ritual():ritual_category() == "STANDARD_RITUAL";
-	end,
-	function(context)
-		local ritual = context:ritual();
-		local ritual_key = ritual:ritual_key();
-		local faction = context:performing_faction();
 		
-		if ritual_key == "wh_main_ritual_chs_cults" then
-			OWR_chs_cults()
-		end;
+		local is_human = faction:is_human();
+		
+		if not is_human and (ritual_key == "wh_main_ritual_chs_cults" or ritual_key == "wh_main_ritual_ksl_winter" or ritual_key == "wh_main_ritual_vmp_intrigue" or ritual_key == "wh_main_ritual_brt_errantry") then
+			OWR_ai_rite_performed_event(faction, ritual_key);
+		end; 
+
 	end,
 	true);
 		
@@ -1793,10 +1862,6 @@ core:add_listener(
 	
 	
 end;
-
-
-
-
 
 
 
@@ -1814,5 +1879,4 @@ function wec_rites()
 	vandy_scripted_effects();
 	
 	OWRLOG("OWR INIT COMPLETE");
-	end;
-	
+end;

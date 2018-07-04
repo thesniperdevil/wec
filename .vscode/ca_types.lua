@@ -159,6 +159,15 @@
 --#     event_picture_id: number
 --#)
 
+--# assume CM.show_message_event: method(
+--#    faction_key: string,
+--#    primary_detail: string,
+--#    secondary_detail: string,
+--#    flavour_text: string,
+--#    show_immediately: boolean,
+--#    event_picture_id: number
+--#)
+
 --# assume CM.add_marker: method(
 --# name: string,
 --# marker_type: CA_MARKER_TYPE,
@@ -362,7 +371,7 @@
 --# assume CA_REGION_MANAGER.region_by_key: method(key: string) --> CA_REGION
 
 
--- FACTION
+-- FACTIOM
 --# assume CA_FACTION.character_list: method() --> CA_CHAR_LIST
 --# assume CA_FACTION.treasury: method() --> number
 --# assume CA_FACTION.name: method() --> string
@@ -382,6 +391,8 @@
 --# assume CA_FACTION.command_queue_index: method() --> CA_CQI
 --# assume CA_FACTION.is_null_interface: method() --> boolean
 --# assume CA_FACTION.faction_leader: method() --> CA_CHAR
+--# assume CA_FACTION.has_home_region: method() --> boolean
+--# assume CA_FACTION.factions_met: method() --> CA_FACTION_LIST
 
 -- FACTION LIST
 --# assume CA_FACTION_LIST.num_items: method() --> number
