@@ -1,10 +1,11 @@
---require("wec_llr")
-require("wec_rites")
---require("wec_runic_forge")
---require("wh_chaos_invasion")
---require("wec_kingdoms_of_ulthuan")
 
+--require("llr/wec_llr")
+--require("owr/wec_rites")
+--require("runic_forge/wec_runic_forge")
+--require("ci/wh_chaos_invasion")
+require("!!wec_development_tools")
 --require("recruiter_controls")
---require("wec_loreful_empires")
 
 require("exterior_scripting/export_helpers__faction_replacement")
+--require("le/wec_loreful_empires")
+
