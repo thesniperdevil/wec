@@ -16,3 +16,6 @@
 
 
 --# assume global class LOREFUL_EMPIRES_MANAGER
+
+
+--# assume global class DEV_TOOL_MANAGER
