@@ -3,7 +3,7 @@
 --require("owr/wec_rites")
 --require("runic_forge/wec_runic_forge")
 --require("ci/wh_chaos_invasion")
-require("!!wec_development_tools")
+require("dev_tools/!!wec_development_tools")
 --require("recruiter_controls")
 
 require("exterior_scripting/export_helpers__faction_replacement")
