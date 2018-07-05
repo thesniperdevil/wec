@@ -6,3 +6,5 @@ require("wec_rites")
 
 --require("recruiter_controls")
 --require("wec_loreful_empires")
+
+require("exterior_scripting/export_helpers__faction_replacement")
