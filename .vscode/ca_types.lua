@@ -298,7 +298,9 @@
 --# assume CA_UNIT.unit_key: method() --> string
 --# assume CA_UNIT.has_force_commander: method() --> boolean
 --# assume CA_UNIT.force_commander: method() --> CA_CHAR
-
+--# assume CA_UNIT.military_force: method() --> CA_MILITARY_FORCE
+--# assume CA_UNIT.has_military_force: method() --> boolean
+--# assume CA_UNIT.percentage_proportion_of_full_strength: method() --> number
 
 --UNIT_LIST
 
