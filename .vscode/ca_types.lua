@@ -363,6 +363,8 @@
 --# assume CA_GARRISON_RESIDENCE.settlement_interface: method() --> CA_SETTLEMENT
 --# assume CA_GARRISON_RESIDENCE.army: method() --> CA_MILITARY_FORCE
 --# assume CA_GARRISON_RESIDENCE.command_queue_index: method() --> CA_CQI
+--# assume CA_GARRISON_RESIDENCE.unit_count: method() --> number
+--# assume CA_GARRISON_RESIDENCE.can_be_occupied_by_faction: method(faction_key: string) --> boolean
 
 -- MODEL
 --# assume CA_MODEL.world: method() --> CA_WORLD
