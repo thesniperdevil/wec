@@ -308,13 +308,19 @@
 
 -- REGION
 --# assume CA_REGION.settlement: method() --> CA_SETTLEMENT
+--# assume CA_REGION.garrison_residence: method() --> CA_GARRISON_RESIDENCE
 --# assume CA_REGION.name: method() --> string
+--# assume CA_REGION.province_name: method() --> string
+--# assume CA_REGION.public_order: method() --> number
 --# assume CA_REGION.is_null_interface: method() --> boolean
 --# assume CA_REGION.is_abandoned: method() --> boolean
 --# assume CA_REGION.owning_faction: method() --> CA_FACTION
 --# assume CA_REGION.slot_list: method() --> CA_SLOT_LIST
 --# assume CA_REGION.is_province_capital: method() --> boolean
 --# assume CA_REGION.building_exists: method(building: string) --> boolean
+--# assume CA_REGION.resource_exists: method(resource_key: string) --> boolean
+--# assume CA_REGION.any_resource_available: method() --> boolean
+--# assume CA_REGION.adjacent_region_list: method() --> CA_REGION_LIST
 
 -- SETTLEMENT
 --# assume CA_SETTLEMENT.logical_position_x: method() --> number
