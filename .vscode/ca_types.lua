@@ -302,6 +302,7 @@
 --# assume CA_UNIT.has_military_force: method() --> boolean
 --# assume CA_UNIT.percentage_proportion_of_full_strength: method() --> number
 
+
 --UNIT_LIST
 
 --#assume CA_UNIT_LIST.num_items: method() --> number
@@ -329,9 +330,18 @@
 --# assume CA_SETTLEMENT.logical_position_y: method() --> number
 --# assume CA_SETTLEMENT.get_climate: method() --> string
 --# assume CA_SETTLEMENT.is_null_interface: method() --> boolean
+--# assume CA_SETTLEMENT.faction: method() -->CA_FACTION
+--# assume CA_SETTLEMENT.commander: method() --> CA_CHAR
+--# assume CA_SETTLEMENT.has_commander: method() --> boolean
+--# assume CA_SETTLEMENT.slot_list: method() --> CA_SLOT_LIST
+--# assume CA_SETTLEMENT.is_port: method() --> boolean
+--# assume CA_SETTLEMENT.region: method() --> CA_REGION
+
 --SLOT LIST
 --# assume CA_SLOT_LIST.num_items: method() --> number
 --# assume CA_SLOT_LIST.item_at: method(index: number) --> CA_SLOT
+--# assume CA_SLOT_LIST.slot_type_exists: method(slot_key: string) --> boolean
+--# assume CA_SLOT_LIST.building_type_exists: method(building_key: string) --> boolean
 
 --SLOT
 --# assume CA_SLOT.has_building: method() --> boolean
