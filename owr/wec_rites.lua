@@ -619,10 +619,13 @@ function owr_rite_unlock_listeners()
 				end
 		},
 
+
+		-------Temporarily removed due to some tech issues
+
 		--KRAKA DRAK--
 		--Guilds--
 		--research kraka_tech4_ancestors
-		{
+		--[[{
 			["subculture"] = "wh_main_sc_dwf_dwarfs",
 			["rite_name"] = "wh_main_ritual_dwf_guilds",
 			["event_name"] = "FactionTurnStart",
@@ -700,7 +703,7 @@ function owr_rite_unlock_listeners()
 					return context:character():faction():name() == faction_name and region:building_exists("wh_main_dwf_slayer_2");
 				end,
 			["faction_name"] = "wh_main_dwf_kraka_drak"
-		},		
+		},]]		
 
 
 		---EMPIRE---
@@ -1700,7 +1703,7 @@ function owr_rite_unlock_listeners()
 		end;
 	end;
 
-	local chaos_restricted_factions = {
+	--[[local chaos_restricted_factions = {
 	"wh_dlc08_chs_chaos_challenger_khorne",
 	"wh_dlc08_chs_chaos_challenger_nurgle",
 	"wh_dlc08_chs_chaos_challenger_slaanesh",
@@ -1738,7 +1741,7 @@ function owr_rite_unlock_listeners()
 				cm:set_ritual_unlocked (cm:get_faction(current_faction):command_queue_index(), "wh_main_ritual_emp_gunpowder", false)
 			end
 		end
-	end
+	end]]
 
 end;
 
