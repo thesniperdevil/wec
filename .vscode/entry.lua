@@ -10,3 +10,6 @@ require("exterior_scripting/export_helpers__faction_replacement")
 --require("le/wec_loreful_empires")
 
 --require("emil_qb/battle_script");
+
+
+require("mcm/mod_configuration")
