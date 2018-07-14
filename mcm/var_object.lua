@@ -130,7 +130,7 @@ end
 
 --v function(self: MCM_VAR) --> boolean
 function mcm_var.has_callback(self)
-    return not not self._callback
+    return not not self:callback()
 end
 
 --v function(self: MCM_VAR, callback: function(mcm: MOD_CONFIGURATION_MANAGER))
