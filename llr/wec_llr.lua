@@ -136,6 +136,19 @@ function llr_lord.new(subtype, forename, surname, originating_faction)
     return self
 end
 
+--v function() --> LLR_LORD
+function llr_lord.null_lord() 
+    local self = {}
+    setmetatable(self, {
+        __index = llr_lord,
+        __tostring = "NULL_INTERFACE"
+    }) --# assume self: LLR_LORD
+    return self
+end
+
+
+
+
 --this is a method of the llr_lord class. This means any object we create with llr_lord.new can use this method.
 --this particular method is usually called an accessor or a getter, because it accesses or gets information about the object.
 
@@ -225,7 +238,7 @@ function llr_lord.add_immortal_trait(self, trait_key)
         WEC_ERROR("method #llr_lord.add_immortal_trait(self, trait_key)# called with a non-string trait key!")
         return
     end
-
+    LLRLOG("Added immortal trait ["..trait_key.."] to lord with subtype ["..self.subtype.."]")
     self.has_immortal_trait_set = true
     self.immortal_trait = trait_key
 end
@@ -548,9 +561,10 @@ function llr_manager.new()
 end
 
 
-
-
-
+--v function(self: LLR_MANAGER, text: string)
+function llr_manager.log(self, text)
+LLRLOG(tostring(text))
+end
 
 
 
@@ -623,14 +637,14 @@ function llr_manager.find_lord_with_subtype(self, subtype, faction)
 
     if not tostring(self) == "llr_manager" then
         WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but is not being applied to a correct object!")
-        return nil
+        return llr_lord.null_lord()
     end
     if not is_string(subtype) then
         WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but the supplied subtype is not a string! ")
-        return nil
+        return llr_lord.null_lord()
     elseif not is_string(faction) then
         WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but the supplied faction is not a string! ")
-        return nil
+        return llr_lord.null_lord()
     end
     --function
 
@@ -638,7 +652,7 @@ function llr_manager.find_lord_with_subtype(self, subtype, faction)
     if self.lords[faction] == nil then
         self.lords[faction] = {}
         WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but no lord could be found!")
-        return nil
+        return llr_lord.null_lord()
     else
         for i = 1, #self.lords[faction] do
             if self.lords[faction][i].subtype == subtype then
@@ -647,7 +661,7 @@ function llr_manager.find_lord_with_subtype(self, subtype, faction)
             end
         end
         WEC_ERROR("method #llr_manager.find_lord_with_subtype(self, subtype, faction)# called but no lord could be found!")
-        return nil
+        return llr_lord.null_lord()
     end
 end
     
@@ -1009,26 +1023,26 @@ local vanilla_lords = {
     {faction = "wh_dlc08_nor_wintertooth", forename = "names_name_346878492", subtype = "wh_dlc08_nor_throgg", surname = "",quests = throgg_quests },
     {faction = "wh_dlc08_nor_norsca", forename = "names_name_981430255", surname = "names_name_791685155", subtype = "wh_dlc08_nor_wulfrik", quests = wulfrik_quests },
     {subtype = "wh2_dlc10_def_crone_hellebron", forename = "names_name_608740515", surname = "", faction = "wh2_main_def_har_ganeth", quests = hellebron_quests},
-    {faction = "wh2_main_hef_nagarythe", subtype = "wh2_dlc10_hef_alith_anar", forename = "names_name_1829581114", surname = "", quests = alith_anar_quests}
-    
+    {faction = "wh2_main_hef_nagarythe", subtype = "wh2_dlc10_hef_alith_anar", forename = "names_name_1829581114", surname = "", quests = alith_anar_quests},
+    {faction = "wh_main_vmp_mousillon",forename = "names_name_2147359236",surname = "",subtype ="wh_dlc05_vmp_red_duke", quests = nil }
 
 }--:vector<{faction: string, forename: string, surname: string, subtype: string, quests: vector<{string, number}>}>
 
 
 for i = 1, #vanilla_lords do --start looping through the information we just defined.
-  local clord = vanilla_lords[i] --makes the rest shorter and easier to type.
-  local fact = clord.faction 
-  local fname = clord.forename
-  local sname = clord.surname
-  local subtype = clord.subtype
-  local lord = llr_lord.new(subtype, fname, sname, fact) --create the new lord object.
-  --if we have a quest table for this lord, we need to add it.
-  if clord.quests then
-    lord:add_quest(clord.quests)
-  end
-  lord:force()
-  llr:add_lord(lord) --add the new lord to our model.
-end
+    local clord = vanilla_lords[i] --makes the rest shorter and easier to type.
+    local fact = clord.faction 
+    local fname = clord.forename
+    local sname = clord.surname
+    local subtype = clord.subtype
+    local lord = llr_lord.new(subtype, fname, sname, fact) --create the new lord object.
+    --if we have a quest table for this lord, we need to add it.
+    if clord.quests then
+        lord:add_quest(clord.quests)
+    end
+        lord:force()
+        llr:add_lord(lord) --add the new lord to our model.
+    end
     LLRLOG("Triggering the Vanilla Lords Added Event")
     core:trigger_event("LegendaryLordVanillaLordsAdded")
 end
