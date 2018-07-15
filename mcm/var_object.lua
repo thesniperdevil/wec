@@ -160,8 +160,6 @@ function mcm_var.ui_tooltip(self)
 end
 
 
-
-
 return {
     new = mcm_var.new,
     null = mcm_var.null

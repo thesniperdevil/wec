@@ -95,6 +95,7 @@ function mod_configuration_manager.register_mod(self, key, ui_name, ui_tooltip)
     end
     local new_mod = mcm_mod.new(self, key, ui_name, ui_tooltip)
     self:get_mods()[key] = new_mod
+    self:log("registered mod ["..key.."]")
     return self:get_mods()[key]
 end
 
@@ -120,6 +121,26 @@ end
         
 --v function(self: MOD_CONFIGURATION_MANAGER, tweaker: MCM_TWEAKER)
 function mod_configuration_manager.handle_tweaker(self, tweaker)
-    cm:set_saved_value("mcm_tweaker"..tweaker:name().."_", "n")
-
+    cm:set_saved_value("mcm_tweaker_"..tweaker:mod():name().."_"..tweaker:name().."_value", tweaker:selected_option():name())
+    if tweaker:selected_option():has_callback() then
+        self:add_callback_to_stack(tweaker:selected_option():callback())
+    end
+    core:trigger_event("mcm_tweaker_"..tweaker:mod():name().."_"..tweaker:name().."_event")
 end
+
+--v function(self: MOD_CONFIGURATION_MANAGER)
+function mod_configuration_manager.process_all_mods(self)
+    for name, mod in pairs(self:get_mods()) do
+        for tweaker_key, tweaker in pairs(mod:tweakers()) do
+            self:handle_tweaker(tweaker)
+        end
+        for variable_key, variable in pairs(mod:variables()) do
+            self:handle_variable(variable)
+        end
+    end
+    for i = 1, #self:get_stack() do
+        self:do_callback_on_stack()
+    end
+end
+
+

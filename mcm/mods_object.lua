@@ -105,6 +105,7 @@ function mcm_mod.add_tweaker(self, key, ui_name, ui_tooltip)
 
     local new_tweaker = mcm_tweaker.new(self, key, ui_name, ui_tooltip)
     self:tweakers()[key] = new_tweaker
+    self:log("created tweaker ["..key.."] for mod ["..self:name().."]")
     return self:tweakers()[key]
 end
 
@@ -124,6 +125,7 @@ function mcm_mod.add_variable(self, key, min, max, default, step, ui_name, ui_to
     end
     local new_variable = mcm_var.new(self, key, min, max, default, step, ui_name, ui_tooltip)
     self:variables()[key] = new_variable
+    self:log("created variable ["..key.."] for mod ["..self:name().."]")
     return self:variables()[key]
 end
 

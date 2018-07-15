@@ -73,7 +73,6 @@ function mcm_tweaker.selected_option(self)
 end
 
 
-
 --v function(self: MCM_TWEAKER) --> map<string, MCM_OPTION>
 function mcm_tweaker.options(self)
     return self._options
