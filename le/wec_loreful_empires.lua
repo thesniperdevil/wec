@@ -6,7 +6,7 @@ LElogVerbosity = 2 --:number
 
 
 function LELOGRESET()
-    if not isLogAllowed then
+    if not __write_output_to_logfile then
         return;
     end
     
@@ -23,7 +23,7 @@ end
 function LELOG(text)
 	ftext = "LESCRIPT"
 
-    if not isLogAllowed then
+    if not __write_output_to_logfile then
       return;
     end
 

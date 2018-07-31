@@ -24,7 +24,7 @@ function LLRLOG(text)
     ftext = "LLR" --:string
     --sometimes I use ftext as an arg of this function, but for simple mods like this one I don't need it.
 
-    if not isLogAllowed then
+    if not __write_output_to_logfile then
       return; --if our bool isn't set true, we don't want to spam the end user with logs. 
     end
 
@@ -39,7 +39,7 @@ function LLRLOG(text)
 end
 
 function LLR_REFRESH_LOG()
-    if not isLogAllowed then
+    if not __write_output_to_logfile then
         return;
     end
 
