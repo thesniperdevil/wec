@@ -298,6 +298,9 @@
 --# assume CA_UNIT.unit_key: method() --> string
 --# assume CA_UNIT.has_force_commander: method() --> boolean
 --# assume CA_UNIT.force_commander: method() --> CA_CHAR
+--# assume CA_UNIT.military_force: method() --> CA_MILITARY_FORCE
+--# assume CA_UNIT.has_military_force: method() --> boolean
+--# assume CA_UNIT.percentage_proportion_of_full_strength: method() --> number
 
 
 --UNIT_LIST
@@ -308,22 +311,37 @@
 
 -- REGION
 --# assume CA_REGION.settlement: method() --> CA_SETTLEMENT
+--# assume CA_REGION.garrison_residence: method() --> CA_GARRISON_RESIDENCE
 --# assume CA_REGION.name: method() --> string
+--# assume CA_REGION.province_name: method() --> string
+--# assume CA_REGION.public_order: method() --> number
 --# assume CA_REGION.is_null_interface: method() --> boolean
 --# assume CA_REGION.is_abandoned: method() --> boolean
 --# assume CA_REGION.owning_faction: method() --> CA_FACTION
 --# assume CA_REGION.slot_list: method() --> CA_SLOT_LIST
 --# assume CA_REGION.is_province_capital: method() --> boolean
 --# assume CA_REGION.building_exists: method(building: string) --> boolean
+--# assume CA_REGION.resource_exists: method(resource_key: string) --> boolean
+--# assume CA_REGION.any_resource_available: method() --> boolean
+--# assume CA_REGION.adjacent_region_list: method() --> CA_REGION_LIST
 
 -- SETTLEMENT
 --# assume CA_SETTLEMENT.logical_position_x: method() --> number
 --# assume CA_SETTLEMENT.logical_position_y: method() --> number
 --# assume CA_SETTLEMENT.get_climate: method() --> string
 --# assume CA_SETTLEMENT.is_null_interface: method() --> boolean
+--# assume CA_SETTLEMENT.faction: method() -->CA_FACTION
+--# assume CA_SETTLEMENT.commander: method() --> CA_CHAR
+--# assume CA_SETTLEMENT.has_commander: method() --> boolean
+--# assume CA_SETTLEMENT.slot_list: method() --> CA_SLOT_LIST
+--# assume CA_SETTLEMENT.is_port: method() --> boolean
+--# assume CA_SETTLEMENT.region: method() --> CA_REGION
+
 --SLOT LIST
 --# assume CA_SLOT_LIST.num_items: method() --> number
 --# assume CA_SLOT_LIST.item_at: method(index: number) --> CA_SLOT
+--# assume CA_SLOT_LIST.slot_type_exists: method(slot_key: string) --> boolean
+--# assume CA_SLOT_LIST.building_type_exists: method(building_key: string) --> boolean
 
 --SLOT
 --# assume CA_SLOT.has_building: method() --> boolean
@@ -345,6 +363,8 @@
 --# assume CA_GARRISON_RESIDENCE.settlement_interface: method() --> CA_SETTLEMENT
 --# assume CA_GARRISON_RESIDENCE.army: method() --> CA_MILITARY_FORCE
 --# assume CA_GARRISON_RESIDENCE.command_queue_index: method() --> CA_CQI
+--# assume CA_GARRISON_RESIDENCE.unit_count: method() --> number
+--# assume CA_GARRISON_RESIDENCE.can_be_occupied_by_faction: method(faction_key: string) --> boolean
 
 -- MODEL
 --# assume CA_MODEL.world: method() --> CA_WORLD
@@ -448,6 +468,7 @@
 --# assume global get_timestamp: function() --> string
 --# assume global script_error: function(msg: string)
 --# assume global to_number: function(n: any) --> number
+--# assume global load_script_libraries: function()
 
 -- CAMPAIGN
 --# assume global get_cm: function() --> CM
@@ -455,7 +476,6 @@
 --# assume global Get_Character_Side_In_Last_Battle: function(char: CA_CHAR) --> BATTLE_SIDE
 --# assume global q_setup: function()
 --# assume global set_up_rank_up_listener: function(quest_table: vector<vector<string | number>>, subtype: string, infotext: vector<string | number>)
-
 
 
 
@@ -474,15 +494,38 @@
 
 --# assume global class MISSION_MANAGER
 --# type global CA_MISSION_OBJECTIVE =
---# "CAPTURE_REGIONS"
+--# "CAPTURE_REGIONS" | "SCRIPTED"
 
+--creation
 --# assume MISSION_MANAGER.new: method(faction_key: string, mission_key: string, success_callback: function?, failure_callback: function?, cancellation_callback: function?) --> MISSION_MANAGER
+
+--basic
 --# assume MISSION_MANAGER.add_new_objective: method(objective_type: CA_MISSION_OBJECTIVE)
 --# assume MISSION_MANAGER.add_condition: method(condition_string: string)
 --# assume MISSION_MANAGER.add_payload: method(payload_string: string)
---# assume MISSION_MANAGER.set_should_cancel_before_issuing: method(boolean?)
---# assume MISSION_MANAGER.trigger: method(dismiss_callback: function?, delay: number?)
+--# assume MISSION_MANAGER.set_turn_limit: method(turns: number)
+--# assume MISSION_MANAGER.set_chapter: method(turns: integer)
+--# assume MISSION_MANAGER.set_mission_issuer: method(issuer: string)
+--localisation
+--# assume MISSION_MANAGER.add_heading: method(heading_loc_key: string)
+--# assume MISSION_MANAGER.add_description: method(description_loc_key: string)
+--scripted objectives
+------Here, string key can be ommited when creating an objective. This will generate it randomly. The script key can only be ommitted from other functions if there is only one scripted objective.
+--# assume MISSION_MANAGER.add_new_scripted_objective: method(objective_loc_key: string, event: string, condition: function(context: WHATEVER) --> boolean, script_key: string?)
+--# assume MISSION_MANAGER.add_scripted_objective_success_condition: method(event: string, condition: function(context: WHATEVER) --> boolean, script_key: string?)
+--# assume MISSION_MANAGER.add_scripted_objective_failure_condition: method(event: string, condition: function(context: WHATEVER) --> boolean, script_key: string?)
+--# assume MISSION_MANAGER.force_scripted_objective_success: method(script_key: string?)
+--# assume MISSION_MANAGER.force_scripted_objective_failure: method(script_key: string?)
+--# assume MISSION_MANAGER.update_scripted_objective_text: method(override_text_loc: string, script_key: string?)
 
+--# assume MISSION_MANAGER.set_should_cancel_before_issuing: method(boolean)
+--# assume MISSION_MANAGER.set_should_should_whitelist: method(boolean)
+
+--# assume MISSION_MANAGER.set_first_time_startup_callback: method(callback: function())
+--# assume MISSION_MANAGER.set_each_time_startup_callback: method(callback: function())
+
+--# assume MISSION_MANAGER.trigger: method(dismiss_callback: function?, delay: number?)
+--# assume CM.get_mission_manager: method(mission_key: string) --> MISSION_MANAGER
 
 
 
