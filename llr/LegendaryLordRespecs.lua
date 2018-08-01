@@ -447,6 +447,7 @@ end
 ---------------------
 ---------------------
 
+--are we tracking this subculture?
 --v function(self: LLR_MANAGER, sub: string) --> boolean
 function llr_manager.is_tracking_subculture(self, sub)
     if self._subculture[sub] == nil then
@@ -455,7 +456,7 @@ function llr_manager.is_tracking_subculture(self, sub)
     return self._subculture[sub]
 end
 
-
+--are we tracking this faction?
 --v function(self: LLR_MANAGER, faction: string) --> boolean
 function llr_manager.is_tracking_faction(self, faction)
     if self._factions[faction] == nil then
@@ -464,18 +465,20 @@ function llr_manager.is_tracking_faction(self, faction)
     return self._factions[faction]
 end
 
-
+--track a faction for confederations
 --v function(self: LLR_MANAGER, faction: string)
 function llr_manager.track_faction(self, faction)
     self._factions[faction] = true
 end
 
+--clear a faction's lords and stop tracking that faction
 --v function(self: LLR_MANAGER, faction: string)
 function llr_manager.clear_and_stop_tracking(self, faction)
     self._factions[faction] = false
     self._lords[faction] = {}
 end
 
+--get the list of lords for that faction
 --v function(self: LLR_MANAGER, faction: string) --> vector<LLR_LORD>
 function llr_manager.get_lords_for_faction(self, faction)
     if self._lords[faction] == nil then
@@ -484,13 +487,14 @@ function llr_manager.get_lords_for_faction(self, faction)
     return self._lords[faction]
 end
 
-
+--add a lord to this faction
 --v function(self: LLR_MANAGER, faction: string, lord: LLR_LORD)
 function llr_manager.add_lord_to_faction(self, faction, lord)
     table.insert(self:get_lords_for_faction(faction), lord)
     self:track_faction(faction)
 end
 
+--remove a lord from this faction
 --v function(self: LLR_MANAGER, faction: string, subtype: string)
 function llr_manager.remove_lord_with_subtype_from_faction(self, faction, subtype)
     local lords = self:get_lords_for_faction(faction)
@@ -554,6 +558,7 @@ function llr_manager.move_faction(self, moving_faction, confederation)
             self._movedFactions[faction] = confederation
         end
     end
+    self:log("Moving faction ["..moving_faction.."] to ["..confederation.."] ")
 end
 
 --add a lord to the model
@@ -565,10 +570,12 @@ function llr_manager.add_lord(self, faction, subtype, forename, surname)
         self:log("ERROR CREATING LORD: the provided information must all be in string format!")
         return llr_lord.null_interface()
     end
+    self:log("Adding a lord with subtype ["..subtype.."] to faction ["..faction.."] ")
 
     local true_faction = faction
     if self:is_faction_moved(faction) then
         true_faction = self:get_faction_move(faction)
+        self:log("Lord was moved to ["..true_faction.."]")
     end
     local new_lord = llr_lord.new(self, faction, subtype, forename, surname)
     self:add_lord_to_faction(true_faction, new_lord)
