@@ -378,7 +378,49 @@ function llr_lord.get_future_quests(self, current_level)
     return quests
 end
 
+--get coordinates
+--v function(self: LLR_LORD) --> number
+function llr_lord.x(self)
+    return self._respawnX
+end
+--v function(self: LLR_LORD) --> number
+function llr_lord.y(self)
+    return self._respawnY
+end
 
+--set coordinates
+--v function(self: LLR_LORD, x: number, y: number)
+function llr_lord.set_coordinates(self, x, y)
+    self._respawnX = x
+    self._respawnY = y
+end
+
+--get the army string
+--v function(self: LLR_LORD) --> string
+function llr_lord.unit_list(self)
+    return self._respawnArmyString
+end
+
+--assemble a spawn string from the lords force
+--v function(self: LLR_LORD, force: CA_MILITARY_FORCE)
+function llr_lord.set_unit_string_from_force(self, force)
+    --TODO
+end
+
+
+
+--v function(self: LLR_LORD) --> number
+function llr_lord.rank(self)
+    return self._respawnRank
+end
+
+
+
+--set the lord rank
+--v function(self: LLR_LORD, rank: number)
+function llr_lord.set_lord_rank(self, rank)
+    self._respawnRank = rank
+end
 
 
 
