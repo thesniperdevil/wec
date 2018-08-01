@@ -251,11 +251,13 @@ function llr_lord.new(model, faction_key, subtype,forename,surname)
     return self
 end
 
+--return the linked model
 --v function(self: LLR_LORD) --> LLR_MANAGER
 function llr_lord.model(self)
     return self._model
 end
 
+--tunnel to log
 --v function(self: LLR_LORD, text: any)
 function llr_lord.log(self, text)
     self:model():log(text)
@@ -321,11 +323,11 @@ end
 --v function(self: LLR_LORD, item: string, level: number)
 function llr_lord.add_quest_item(self, item, level)
     if not is_string(item) then
-        self:log("Tried to add a quest item, but the provided ancillary key is not a string!")
+        self:log("ERROR: Tried to add a quest item, but the provided ancillary key is not a string!")
         return
     end
     if not is_number(level) then
-        self:log("Tried to add a quest item, but the required level is not a number!")
+        self:log("ERROR: Tried to add a quest item, but the required level is not a number!")
         return
     end
 
@@ -339,6 +341,38 @@ function llr_lord.get_completed_quests(self, current_level)
     for item, level in pairs(self:quest_items()) do
         if level <= current_level then
             table.insert(quests, item)
+        end
+    end
+    return quests
+end
+
+--get the table of quests to missions
+--v function(self: LLR_LORD) --> map<string, number>
+function llr_lord.quest_missions(self)
+    return self._questMissionLevels
+end
+
+--add a quest mission
+--v function(self: LLR_LORD, mission: string, level: number)
+function llr_lord.add_quest_mission(self, mission, level)
+    if not is_string(mission) then
+        self:log("ERROR: Tried to add a quest mission, but the suplied mission is not a string!")
+        return
+    end
+    if not is_number(level) then
+        self:log("ERROR: Tried to add a quest mission, but the supplied level is not a number!")
+        return
+    end
+    self._questMissionLevels[mission] = level
+end
+
+--get all quest missions over the current level
+--v function(self: LLR_LORD, current_level: number) --> vector<string>
+function llr_lord.get_future_quests(self, current_level)
+    local quests = {} --:vector<string>
+    for mission, level in pairs(self:quest_missions()) do
+        if level > current_level then
+            table.insert(quests, mission)
         end
     end
     return quests
