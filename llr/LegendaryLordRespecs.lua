@@ -167,7 +167,12 @@ LLR_ERROR_FINDER()
 
 
 
+--blank savetable
+--# type LLR_RECORDS = {
+--# _movedLords: map<string, string>, _questSubtypes: map<string, {_mission: string, _level: string}>}
 
+
+llr_records = {} --# assume llr_records: LLR_RECORDS
 
 
 
@@ -175,116 +180,124 @@ llr_manager = {} --# assume llr_manager: LLR_MANAGER
 llr_lord = {} --# assume llr_lord: LLR_LORD
 --prototypes for our objects
 
-
 --instantiate the manager
---v function() --> LLR_MANAGER
+--v function()
 function llr_manager.new()
-    LLRLOG("Creating the manager!");
     local self = {}
     setmetatable(self, {
         __index = llr_manager,
         __tostring = function() return "LLR_MANAGER" end
-    })
-    --# assume self: LLR_MANAGER
-    self.humans = cm:get_human_factions()
-    
-    self.subcultures = {} --:map<string, bool>
-    for i, v in pairs(self.humans) do
-        --we get a subculture for each human
-        local sc = cm:get_faction(v):subculture()
-        --we set the value of that subculture key in the table to true.
-        self.subcultures[sc] = true
-    end
-    --now we initialise the same for factions, but we don't know what factions we want to listen for yet, so we leave this alone.
-    self.factions = {} --:map<string, bool>
-    --finally, we have to initialise our storage table for the lord objects themselves. They go in here!
-    self.lords = {} --:map<string, vector<LLR_LORD>>
+    }) --# assume self: LLR_MANAGER
 
-    return self
+    self._humans = cm:get_human_factions()
+    self._subculture = {} --:map<string, boolean>
+    for i = 1, #self._humans do
+        self._subculture[cm:get_faction(self._humans[i]):subculture()] = true
+    end
+
+    self._factions = {} --:map<string, boolean>
+    self._lords = {} --:map<string, vector<LLR_LORD>>
+    _G.llr = self
 end
-    
---v method (text:any)
+
+--tunnel to log
+--v method(text: any)
 function llr_manager:log(text)
     LLRLOG(tostring(text))
 end
 
-------------------
-------------------
-------------------
-------------------
-------------------
-------------------
---LORD SUBOBJECT--
---v function() --> LLR_LORD
-function llr_lord.null_lord() 
+-----------------------
+-----------------------
+-----------------------
+-----------------------
+--LLR_LORD SUB OBJECT--
+
+--v [NO_CHECK] function() --> LLR_LORD
+function llr_lord.null_interface()
+    null_interface = {}
+    null_interface.is_null_interface = function(self) return true end
+    return null_interface
+end
+
+--v function(model: LLR_MANAGER, faction_key: string, subtype: string, forename: string, surname: string) --> LLR_LORD
+function llr_lord.new(model, faction_key, subtype,forename,surname)
+    local self = {}
+    if not tostring(model) == "LLR_MANAGER" then
+        LLRLOG("tried to create a lord but did not provide a valid manager!")
+        return llr_lord.null_interface()
+    end
     local self = {}
     setmetatable(self, {
         __index = llr_lord,
-        __tostring = "NULL_INTERFACE"
+        __tostring = function() return "LLR_LORD" end
     }) --# assume self: LLR_LORD
+
+    self._factionKey = faction_key
+    self._subtypeKey = subtype
+    self._forenameKey = forename
+    self._surnameKey = surname
+
+
     return self
 end
-    
 
---v function(model: LLR_MANAGER, subtype: string, forename: string, surname: string, originating_faction: string) --> LLR_LORD
-function llr_lord.new(model, subtype, forename, surname, originating_faction)
 
-    --error checking
-    if not tostring(model) == "LLR_MANAGER" then
-        LLRLOG("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied model is not a string!")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cm:add_saving_game_callback(
+    function(context)
+        cm:save_named_value("llr_records", llr_records, context)
     end
-    if not is_string(subtype) then
-        model:log("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied subtype is not a string!");
-        return llr_lord.null_lord()
+)
+
+cm:add_loading_game_callback(
+    function(context)
+        llr_records = cm:load_named_value("llr_records", {}, context)
     end
-    if not is_string(forename) then
-        model:log("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied forename is not a string!");
-        return llr_lord.null_lord()
-    end
-    if not is_string(surname) then
-        model:log("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied surname is not a string!");
-        return llr_lord.null_lord()
-    end
-    if not is_string(originating_faction) then
-        model:log("method #llr_lord.new(subtype, forename, surname, originating_faction)# called but the supplied originating_faction is not a string!");
-        return llr_lord.null_lord()
-    end
-    
+)
 
 
 
 
-    --function
-    LLRLOG("Adding lord with subtype ["..subtype.."], forename ["..forename.."], surname ["..surname.."] and originating faction ["..originating_faction.."] ")
-    local self = {} --once again, we are defining the object as a blank because the type checker prefers this style of doing it.
-    setmetatable(self, {
-        __index = llr_lord,
-        __tostring = function() return "llr_lord" end
-    }) 
-    -- this basically tells the table we just created to take on the properties of that object type. 
-    -- now, any function we define as llr_lord.something can be applied to this object.
-    --# assume self: LLR_LORD
-    --these are kailua language. Its the type checker I use. This basically is telling the type checker to treat this new object instance as a LLR_LORD class.
-    
-    self.subtype = subtype
-    self.forename = forename
-    self.surname = surname
-    self.faction = originating_faction
 
 
-    
-    --these add the args we gave as the fields/properties of the object. 
-    self.has_quest_set = false --:boolean
-    self.quest_ancilaries = {} --:vector<{string, number}>
-    self.has_immortal_trait_set = false --: boolean
-    self.immortal_trait = nil --:string
-    self.no_check = false --: boolean
-    --quests won't re-trigger if the AI has already completed them, so we're going to have to reset them manually.
 
-    self.exp_level = nil --:integer
 
-    self.safety_abort = false
 
-    --we now return our brand new object.
-    return self
-end
+
+
+
+
+
+
+
+
