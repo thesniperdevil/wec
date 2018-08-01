@@ -399,8 +399,6 @@ function llr_lord.add_trait(self, trait)
 end
 
 
-
-
 --get coordinates
 --v function(self: LLR_LORD) --> number
 function llr_lord.x(self)
@@ -472,6 +470,11 @@ function llr_manager.track_faction(self, faction)
     self._factions[faction] = true
 end
 
+--v function(self: LLR_MANAGER, faction: string)
+function llr_manager.clear_and_stop_tracking(self, faction)
+    self._factions[faction] = false
+    self._lords[faction] = {}
+end
 
 --v function(self: LLR_MANAGER, faction: string) --> vector<LLR_LORD>
 function llr_manager.get_lords_for_faction(self, faction)
@@ -485,6 +488,7 @@ end
 --v function(self: LLR_MANAGER, faction: string, lord: LLR_LORD)
 function llr_manager.add_lord_to_faction(self, faction, lord)
     table.insert(self:get_lords_for_faction(faction), lord)
+    self:track_faction(faction)
 end
 
 --v function(self: LLR_MANAGER, faction: string, subtype: string)
@@ -542,7 +546,7 @@ function llr_manager.move_faction(self, moving_faction, confederation)
         self:add_lord_to_faction(confederation, lords[i])
     end
     --clean up their lord table.
-    self._lords[moving_faction] = {}
+    self:clear_and_stop_tracking(moving_faction)
     --other factions might be moved to this faction, which could cause nil reference.
     --find any cases of this and move them too
     for faction, location in pairs(self:moved_factions()) do
