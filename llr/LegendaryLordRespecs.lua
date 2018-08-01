@@ -172,8 +172,8 @@ LLR_ERROR_FINDER()
 --# _movedLords: map<string, string>, _questSubtypes: map<string, {_mission: string, _level: string}>}
 
 
-llr_records = {} --# assume llr_records: LLR_RECORDS
-
+llr_records = {_movedLords = {}, _questSubtypes = {}} --: LLR_RECORDS
+--this line is unncessary to the script working, it exists to make kailua happy
 
 
 llr_manager = {} --# assume llr_manager: LLR_MANAGER
@@ -182,7 +182,7 @@ llr_lord = {} --# assume llr_lord: LLR_LORD
 
 --instantiate the manager
 --v function()
-function llr_manager.new()
+function llr_manager.init()
     local self = {}
     setmetatable(self, {
         __index = llr_manager,
@@ -231,29 +231,118 @@ function llr_lord.new(model, faction_key, subtype,forename,surname)
         __index = llr_lord,
         __tostring = function() return "LLR_LORD" end
     }) --# assume self: LLR_LORD
-
+    --access to model
+    self._model = model
+    --basic info
     self._factionKey = faction_key
     self._subtypeKey = subtype
     self._forenameKey = forename
     self._surnameKey = surname
-
+    --traits and already completed quests
+    self._questItemLevels = {} --:map<string, number>
+    self._questMissionLevels = {} --:map<string, number>
+    self._immortalityTraits = {} --:vector<string>
+    -- value storage for respecs
+    self._respawnX = nil --:number
+    self._respawnY = nil --:number
+    self._respawnRank = nil --:number
+    self._respawnArmyString = nil --:string
 
     return self
 end
 
+--v function(self: LLR_LORD) --> LLR_MANAGER
+function llr_lord.model(self)
+    return self._model
+end
+
+--v function(self: LLR_LORD, text: any)
+function llr_lord.log(self, text)
+    self:model():log(text)
+end
 
 
+--return the faction name
+--v function(self: LLR_LORD) --> string
+function llr_lord.faction(self)
+    return self._factionKey
+end
 
+--return the subtype
+--v function(self: LLR_LORD) --> string
+function llr_lord.subtype(self)
+    return self._subtypeKey
+end
 
+--return the forename
+--v function(self: LLR_LORD) --> string
+function llr_lord.forename(self)
+    return self._forenameKey
+end
 
+--return the surname
+--v function(self: LLR_LORD) --> string
+function llr_lord.surname(self)
+    return self._surnameKey
+end
 
+--change the faction set on the lord
+--warning, this won't change their faction in model. NOT FOR USE EXTERNAL TO MODEL
+--v function(self: LLR_LORD, faction: string)
+function llr_lord.set_faction(self, faction)
+    self._factionKey = faction
+end
 
+--change the subtype key of the lord
+--v function(self: LLR_LORD, subtype: string)
+function llr_lord.set_subtype(self, subtype)
+    self._subtypeKey = subtype
+end
 
+--change the forename key of the lord
+--v function(self: LLR_LORD, forename: string)
+function llr_lord.set_forename(self, forename)
+    self._forenameKey = forename
+end
 
+--change the surname key of the lord
+--v function(self: LLR_LORD, surname: string)
+function llr_lord.set_surname(self, surname)
+    self._surnameKey = surname
+end
 
+--get the table of quest items
+--v function(self: LLR_LORD) --> map<string, number>
+function llr_lord.quest_items(self)
+    return self._questItemLevels
+end
 
+--add a quest at a level
+--v function(self: LLR_LORD, item: string, level: number)
+function llr_lord.add_quest_item(self, item, level)
+    if not is_string(item) then
+        self:log("Tried to add a quest item, but the provided ancillary key is not a string!")
+        return
+    end
+    if not is_number(level) then
+        self:log("Tried to add a quest item, but the required level is not a number!")
+        return
+    end
 
+    self._questItemLevels[item] = level
+end
 
+--get quests from below or equal to a certain level
+--v function(self: LLR_LORD, current_level: number) --> vector<string>
+function llr_lord.get_completed_quests(self, current_level)
+    local quests = {} --:vector<string>
+    for item, level in pairs(self:quest_items()) do
+        if level <= current_level then
+            table.insert(quests, item)
+        end
+    end
+    return quests
+end
 
 
 
@@ -281,7 +370,8 @@ cm:add_saving_game_callback(
 
 cm:add_loading_game_callback(
     function(context)
-        llr_records = cm:load_named_value("llr_records", {}, context)
+        llr_records = cm:load_named_value("llr_records", {_movedLords = {}, _questSubtypes = {}}, context)
+        llr_manager.init()
     end
 )
 
