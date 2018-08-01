@@ -167,15 +167,6 @@ LLR_ERROR_FINDER()
 
 
 
---blank savetable
---# type LLR_RECORDS = {
---# _movedLords: map<string, string>, _questSubtypes: map<string, {_mission: string, _level: string}>}
-
-
-llr_records = {_movedLords = {}, _questSubtypes = {}} --: LLR_RECORDS
---this line is unncessary to the script working, it exists to make kailua happy
-
-
 llr_manager = {} --# assume llr_manager: LLR_MANAGER
 llr_lord = {} --# assume llr_lord: LLR_LORD
 --prototypes for our objects
@@ -197,6 +188,9 @@ function llr_manager.init()
 
     self._factions = {} --:map<string, boolean>
     self._lords = {} --:map<string, vector<LLR_LORD>>
+    self._movedFactions = {} --:map<string, string>
+    self._questSubtypes = {} --:vector<string>
+
     _G.llr = self
 end
 
@@ -205,6 +199,22 @@ end
 function llr_manager:log(text)
     LLRLOG(tostring(text))
 end
+
+--v function(self: LLR_MANAGER) -->{_movedFactions: map<string, string>, _questSubtypes: vector<string>}
+function llr_manager.save(self)
+    local savetable = {}
+    savetable._movedFactions = self._movedFactions
+    savetable._questSubtypes = self._questSubtypes
+    return savetable
+end
+
+--v function(self: LLR_MANAGER, loadinfo: {_movedFactions: map<string, string>, _questSubtypes: vector<string>})
+function llr_manager.load(self, loadinfo)
+    self._questSubtypes = loadinfo._questSubtypes
+    self._movedFactions = loadinfo._movedFactions
+end
+
+
 
 -----------------------
 -----------------------
@@ -408,14 +418,11 @@ function llr_lord.set_unit_string_from_force(self, force)
 end
 
 
-
+--get the lord rank
 --v function(self: LLR_LORD) --> number
 function llr_lord.rank(self)
     return self._respawnRank
 end
-
-
-
 --set the lord rank
 --v function(self: LLR_LORD, rank: number)
 function llr_lord.set_lord_rank(self, rank)
@@ -429,7 +436,7 @@ end
 
 
 
-
+llr_manager.init()
 
 
 
@@ -440,14 +447,15 @@ end
 
 cm:add_saving_game_callback(
     function(context)
+        local llr_records = _G.llr:save()
         cm:save_named_value("llr_records", llr_records, context)
     end
 )
 
 cm:add_loading_game_callback(
     function(context)
-        llr_records = cm:load_named_value("llr_records", {_movedLords = {}, _questSubtypes = {}}, context)
-        llr_manager.init()
+        llr_records = cm:load_named_value("llr_records", {_movedFactions = {}, _questSubtypes = {}}, context)
+        _G.llr:load(llr_records)
     end
 )
 
