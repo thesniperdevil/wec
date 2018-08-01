@@ -388,6 +388,19 @@ function llr_lord.get_future_quests(self, current_level)
     return quests
 end
 
+--v function(self: LLR_LORD) --> vector<string>
+function llr_lord.traits(self)
+    return self._immortalityTraits
+end
+
+--v function(self: LLR_LORD, trait: string)
+function llr_lord.add_trait(self, trait)
+    table.insert(self._immortalityTraits, trait)
+end
+
+
+
+
 --get coordinates
 --v function(self: LLR_LORD) --> number
 function llr_lord.x(self)
@@ -430,28 +443,150 @@ function llr_lord.set_lord_rank(self, rank)
 end
 
 
+--END OF SUB OBJECT--
+---------------------
+---------------------
+---------------------
+---------------------
+
+--v function(self: LLR_MANAGER, sub: string) --> boolean
+function llr_manager.is_tracking_subculture(self, sub)
+    if self._subculture[sub] == nil then
+        self._subculture[sub] = false
+    end
+    return self._subculture[sub]
+end
+
+
+--v function(self: LLR_MANAGER, faction: string) --> boolean
+function llr_manager.is_tracking_faction(self, faction)
+    if self._factions[faction] == nil then
+        self._factions[faction] = false
+    end
+    return self._factions[faction]
+end
+
+
+--v function(self: LLR_MANAGER, faction: string)
+function llr_manager.track_faction(self, faction)
+    self._factions[faction] = true
+end
+
+
+--v function(self: LLR_MANAGER, faction: string) --> vector<LLR_LORD>
+function llr_manager.get_lords_for_faction(self, faction)
+    if self._lords[faction] == nil then
+        self._lords[faction] = {}
+    end
+    return self._lords[faction]
+end
+
+
+--v function(self: LLR_MANAGER, faction: string, lord: LLR_LORD)
+function llr_manager.add_lord_to_faction(self, faction, lord)
+    table.insert(self:get_lords_for_faction(faction), lord)
+end
+
+--v function(self: LLR_MANAGER, faction: string, subtype: string)
+function llr_manager.remove_lord_with_subtype_from_faction(self, faction, subtype)
+    local lords = self:get_lords_for_faction(faction)
+    local index = nil --:integer
+    for i = 1, #lords do
+        if lords[i]:subtype() == subtype then
+            index = i
+            break
+        end
+    end
+    if not index == nil then
+        table.remove(lords, index)
+    end
+end
+
+--get all faction moves
+--v function(self: LLR_MANAGER) --> map<string, string>
+function llr_manager.moved_factions(self)
+    return self._movedFactions
+end
+
+
+--check if the faction has a move registered
+--v function(self: LLR_MANAGER, faction: string) --> boolean
+function llr_manager.is_faction_moved(self, faction)
+    if self._movedFactions[faction] == nil then
+        return false
+    else
+        return true
+    end
+end
+
+--get the registered move of a faction
+--v function(self: LLR_MANAGER, faction:string) --> string
+function llr_manager.get_faction_move(self, faction)
+    if self._movedFactions[faction] == nil then
+        self:log("WARNING: get faction move called for a faction that isn't moved!")
+        --return the faction itself. It hasn't moved, so this works!
+        return faction
+    end
+    return self._movedFactions[faction]
+end
+
+--moves a faction to another (when the AI confederates).
+--moves all factions moved into this faction into the new one
+--v function(self: LLR_MANAGER, moving_faction: string, confederation: string)
+function llr_manager.move_faction(self, moving_faction, confederation)
+    --set them moved. This will persist the move through saves.
+    self._movedFactions[moving_faction] = confederation
+    --dump their lords into the other faction
+    local lords = self:get_lords_for_faction(moving_faction)
+    for i = 1, #lords do
+        self:add_lord_to_faction(confederation, lords[i])
+    end
+    --clean up their lord table.
+    self._lords[moving_faction] = {}
+    --other factions might be moved to this faction, which could cause nil reference.
+    --find any cases of this and move them too
+    for faction, location in pairs(self:moved_factions()) do
+        if location == moving_faction then
+            self._movedFactions[faction] = confederation
+        end
+    end
+end
+
+--add a lord to the model
+--public function
+--v function(self: LLR_MANAGER, faction: string, subtype: string, forename: string, surname: string) --> LLR_LORD
+function llr_manager.add_lord(self, faction, subtype, forename, surname)
+
+    if not (is_string(faction) and is_string(subtype) and is_string(forename) and is_string(surname)) then
+        self:log("ERROR CREATING LORD: the provided information must all be in string format!")
+        return llr_lord.null_interface()
+    end
+
+    local true_faction = faction
+    if self:is_faction_moved(faction) then
+        true_faction = self:get_faction_move(faction)
+    end
+    local new_lord = llr_lord.new(self, faction, subtype, forename, surname)
+    self:add_lord_to_faction(true_faction, new_lord)
+    return new_lord
+end
 
 
 
 
 
 
+
+--initialize
 llr_manager.init()
-
-
-
-
-
-
-
-
+ --save necessary data from the model
 cm:add_saving_game_callback(
     function(context)
         local llr_records = _G.llr:save()
         cm:save_named_value("llr_records", llr_records, context)
     end
 )
-
+--load necessary data back into the model
 cm:add_loading_game_callback(
     function(context)
         llr_records = cm:load_named_value("llr_records", {_movedFactions = {}, _questSubtypes = {}}, context)
