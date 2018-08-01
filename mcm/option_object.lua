@@ -11,7 +11,7 @@ function mcm_option.new(tweaker, key, ui_name, ui_tooltip)
     self._name = key
     self._uiName = ui_name or "Unnamed Option"
     self._uiToolTip = ui_tooltip or ""
-    self._callback = nil --: function(mcm: MOD_CONFIGURATION_MANAGER)
+    self._callback = nil --: function(context: MOD_CONFIGURATION_MANAGER)
     return self
 
 end
@@ -50,7 +50,7 @@ function mcm_option.log(self, text)
     self:tweaker():log(text)
 end
 
---v function(self: MCM_OPTION) --> function(mcm: MOD_CONFIGURATION_MANAGER)
+--v function(self: MCM_OPTION) --> function(context: MOD_CONFIGURATION_MANAGER)
 function mcm_option.callback(self)
     return self._callback
 end
@@ -61,7 +61,7 @@ function mcm_option.has_callback(self)
     return not not self:callback()
 end
 
---v function(self: MCM_OPTION, callback: function(mcm: MOD_CONFIGURATION_MANAGER))
+--v function(self: MCM_OPTION, callback: function(context: MOD_CONFIGURATION_MANAGER))
 function mcm_option.add_callback(self, callback)
     self:log("added callback to option ["..self:name().."] ")
     self._callback = callback

@@ -44,7 +44,7 @@ function mod_configuration_manager.init()
         __tostring = function() return "MOD_CONFIGURATION_MANAGER" end
     })--# assume self: MOD_CONFIGURATION_MANAGER
 
-    self._modConfigStack = {} --:vector<function(mcm: MOD_CONFIGURATION_MANAGER)>
+    self._modConfigStack = {} --:vector<function(context: MOD_CONFIGURATION_MANAGER)>
     self._registeredMods = {} --:map<string, MCM_MOD>
 
     _G.mcm = self
@@ -55,12 +55,12 @@ function mod_configuration_manager.log(self, text)
     LOG(tostring(text))
 end
 
---v function(self: MOD_CONFIGURATION_MANAGER) --> vector<function(mcm: MOD_CONFIGURATION_MANAGER)>
+--v function(self: MOD_CONFIGURATION_MANAGER) --> vector<function(context: MOD_CONFIGURATION_MANAGER)>
 function mod_configuration_manager.get_stack(self)
     return self._modConfigStack
 end
 
---v function(self:MOD_CONFIGURATION_MANAGER, callback: function(mcm: MOD_CONFIGURATION_MANAGER) )
+--v function(self:MOD_CONFIGURATION_MANAGER, callback: function(context: MOD_CONFIGURATION_MANAGER) )
 function mod_configuration_manager.add_callback_to_stack(self, callback)
     table.insert(self:get_stack(), callback)
 end

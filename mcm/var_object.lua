@@ -38,7 +38,7 @@ function mcm_var.null(mod)
     self._stepValue = 0
     self._uiName = ""
     self._uiToolTip = ""
-    self._callback = nil --:function(mcm: MOD_CONFIGURATION_MANAGER)
+    self._callback = nil --:function(context: MOD_CONFIGURATION_MANAGER)
     return self
 end
 
@@ -123,7 +123,7 @@ function mcm_var.decrement_value(self)
     self:set_current_value(self:current_value() - self:step())
 end
 
---v function(self: MCM_VAR) --> function(mcm: MOD_CONFIGURATION_MANAGER)
+--v function(self: MCM_VAR) --> function(context: MOD_CONFIGURATION_MANAGER)
 function mcm_var.callback(self)
     return self._callback
 end
@@ -133,7 +133,7 @@ function mcm_var.has_callback(self)
     return not not self:callback()
 end
 
---v function(self: MCM_VAR, callback: function(mcm: MOD_CONFIGURATION_MANAGER))
+--v function(self: MCM_VAR, callback: function(context: MOD_CONFIGURATION_MANAGER))
 function mcm_var.add_callback(self, callback)
     self:log("added callback to variable ["..self:name().."] ")
     self._callback = callback
