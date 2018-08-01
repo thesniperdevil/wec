@@ -425,7 +425,25 @@ end
 --assemble a spawn string from the lords force
 --v function(self: LLR_LORD, force: CA_MILITARY_FORCE)
 function llr_lord.set_unit_string_from_force(self, force)
-    --TODO
+    local spawn_string = ""--:string
+    local army_list = {} --:vector<string>
+    --first, convert CA object list into a vector of unit names
+    for i = 0, force:unit_list():num_items() - 1 do
+        local current_unit = force:unit_list():item_at(i):unit_key()
+        table.insert(army_list, current_unit)
+    end
+    --now, assemble a spawn string
+    for i = 2, #army_list do --start at 2, otherwise we will capture the land unit of the lord himself!
+
+        --we want to check if the current unit is a character, and exclude them if they are
+        if string.find(army_list[i], "_cha_") then
+            self:log("Skipping "..army_list[i].." because it is a character!")
+        else
+            next_string = spawn_string..","..army_list[i]
+            spawn_string = next_string
+        end
+    end
+    self._respawnArmyString = spawn_string
 end
 
 
