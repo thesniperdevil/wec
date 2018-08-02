@@ -255,6 +255,7 @@ function llr_lord.new(model, faction_key, subtype,forename,surname)
     -- value storage for respecs
     self._respawnX = nil --:number
     self._respawnY = nil --:number
+    self._respawnRegion = nil --:string
     self._respawnRank = nil --:number
     self._respawnArmyString = nil --:string
 
@@ -473,6 +474,23 @@ function llr_lord.set_spawn_string_to_subculture_default(self, subculture)
 
     self._respawnArmyString = subculture_default_units[subculture]
 end
+
+--get the lord region
+--v function(self: LLR_LORD) --> string
+function llr_lord.region(self)
+    return self._respawnRegion
+end
+--set the lord region
+--v function(self: LLR_LORD, region: string)
+function llr_lord.set_lord_region(self, region)
+    self._respawnRegion = region
+end
+
+
+
+
+
+
 
 --get the lord rank
 --v function(self: LLR_LORD) --> number
