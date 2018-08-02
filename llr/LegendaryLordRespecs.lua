@@ -1,3 +1,4 @@
+cm:set_saved_value("wec_ll_revival", true);
 function LLRLOGRESET()
     if not __write_output_to_logfile then
         return;
@@ -167,8 +168,8 @@ LLR_ERROR_FINDER()
 
 
 
-llr_manager = {} --# assume llr_manager: LLR_MANAGER
-llr_lord = {} --# assume llr_lord: LLR_LORD
+local llr_manager = {} --# assume llr_manager: LLR_MANAGER
+local llr_lord = {} --# assume llr_lord: LLR_LORD
 --prototypes for our objects
 
 --instantiate the manager
@@ -376,7 +377,7 @@ end
 
 --add a quest at a level
 --v function(self: LLR_LORD, item: string, level: number)
-function llr_lord.add_quest_item(self, item, level)
+function llr_lord.add_quest(self, item, level)
     if not is_string(item) then
         self:log("ERROR: Tried to add a quest item, but the provided ancillary key is not a string!")
         return
