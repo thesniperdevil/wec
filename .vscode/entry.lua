@@ -1,5 +1,16 @@
 
+---[[
 require("llr/LegendaryLordRespecs")
+require("llr/export_helpers__llr_core")
+
+--]]
+
+
+
+
+
+
+
 --require("owr/wec_rites")
 --require("runic_forge/wec_runic_forge")
 --require("ci/wh_chaos_invasion")
