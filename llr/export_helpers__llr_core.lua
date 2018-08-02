@@ -8,7 +8,8 @@ function get_exp_for_level(level)
         11510,13080,14660, 16240,17820,19400, 20990,22580,24170,25770,27370,28980,30590,32210,
         33830,35460,37100,38740, 40390,42050,43710,45380,47060,48740,50430,52130, 53830, 55540,57260,58990,
         60730, 60730, 60730, 60730,  60730, 60730, 60730, 60730, 60730,  60730, 60730, 60730,
-        60730 }--:vector<number>
+        60730,   60730, 60730, 60730, 60730,  60730, 60730, 60730, 60730, 60730,  60730, 60730, 60730,
+        60730, 60730, 60730, 60730,  60730, 60730, 60730, 60730, 60730,  60730, 60730, 60730, }--:vector<number>
     return exp_to_levels_table[level]
 end
 
@@ -16,71 +17,162 @@ end
 
 --v function(cqi: CA_CQI, lord: LLR_LORD)
 local function grant_quest_items(cqi, lord)
-
+    local character = cm:get_character_by_cqi(cqi)
+    local items = lord:get_completed_quests(lord:rank())
+    for i = 1, #items do
+        cm:force_add_and_equip_ancillary(cm:char_lookup_str(cqi), items[i])
+    end
 end
 
+--v function(player_faction: string, lord: LLR_LORD)
+local function setup_quest_listeners(player_faction, lord)
 
-
-
-
+    for i = 1, #lord:quest_save_values() do
+        cm:set_saved_value(lord:quest_save_values()[i], true)
+    end
+    local quests = lord:get_future_quests(lord:rank())
+    for i = 1, #quests do
+        local quest = quests[i]
+        core:add_listener(
+            "llr_quest_"..quest,
+            "CharacterTurnStart",
+            function(context)
+                local character = context:character() --:CA_CHAR
+                return character:character_subtype_key() == lord:subtype() and character:rank() > lord:get_level_for_quest(quest) and character:faction():name() == player_faction
+            end,
+            function(context)
+                --give the ancilary
+                cm:force_add_and_equip_ancillary(cm:char_lookup_str(context:character():cqi()), quest)
+                -- remove the subtype and level from the savetable
+                llr:delete_saved_quest(player_faction, quest)
+            end,
+            false)
+            local quest_info = {}
+            quest_info.level = lord:get_level_for_quest(quest)
+            quest_info.item = quest
+            quest_info.subtype = lord:subtype()
+            llr:save_quest(player_faction, quest_info)
+    end
+    
+end
 
 
 
 --v function(player_faction: string, lord: LLR_LORD, character: CA_CHAR)
 local function respec_char_with_army(player_faction, lord, character)
+    --set the lord information to match the character
     lord:set_lord_rank(character:rank())
     lord:set_coordinates(character:logical_position_x(), character:logical_position_y())
     lord:set_unit_string_from_force(character:military_force())
-    
+    --if they are in a null interface region, we're just going to spawn them at the capital
+    if character:region():is_null_interface() then
+        lord:set_coordinates(character:faction():home_region():settlement():logical_position_x() + 1, character:faction():home_region():settlement():logical_position_y() + 1)
+        lord:set_lord_region(character:faction():home_region():name())
+    else
+        lord:set_lord_region(character:region():name())
+        lord:set_coordinates(character:logical_position_x(), character:logical_position_y())
+    end
     cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
+    --remove immortalitiy and registered traits
     cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
     for i = 1, #lord:traits() do
-        cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), lord:traits()[i])
+        if character:has_trait(lord:traits()[i]) then
+            cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), lord:traits()[i])
+        end
     end
-    
+    --kill character
     cm:kill_character(character:command_queue_index(), true, true)
-
+    --turn events back on
     cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
-        cm:callback( function()
-            llr:log("spawning lord for respec!")
-            cm:create_force_with_general(
-            player_faction,
-            lord:unit_list(),
-            lord:region(),
-            lord:x(),
-            lord:y(),
-            "general",
-            lord:subtype(),
-            lord:forename(),
-            "",
-            lord:surname(),
-            "",
-            false,
-            function(cqi) 
-                llr:log("Levelling up the respec'd lord!")
-                cm:set_character_immortality(cm:char_lookup_str(cqi), true);
-                grant_quest_items(cqi, lord)
-                for i = 1, #lord:traits() do
-
-                end
-                cm:add_agent_experience(cm:char_lookup_str(cqi), get_exp_for_level(lord:rank()))       
-                llr:log("Levelling up the respec'd lord finished.")
-            end)
-        end,
-        0.1
+    --respawn the character
+    cm:callback( function()
+        llr:log("spawning lord for respec!")
+        cm:create_force_with_general(
+        player_faction,
+        lord:unit_list(),
+        lord:region(),
+        lord:x(),
+        lord:y(),
+        "general",
+        lord:subtype(),
+        lord:forename(),
+        "",
+        lord:surname(),
+        "",
+        false,
+        function(cqi) 
+            llr:log("Levelling up the respec'd lord!")
+            cm:set_character_immortality(cm:char_lookup_str(cqi), true);
+            grant_quest_items(cqi, lord)
+            for i = 1, #lord:traits() do
+                cm:force_add_trait(cm:char_lookup_str(cqi), lord:traits()[i], true)
+            end
+            cm:add_agent_experience(cm:char_lookup_str(cqi), get_exp_for_level(lord:rank()))       
+            llr:log("Levelling up the respec'd lord finished.")
+        end)
+    end,
+    0.1
     );
 
 end
 
 --v function(player_faction: string, lord: LLR_LORD, character: CA_CHAR)
 local function respec_wounded_character(player_faction, lord, character)
-
+    lord:set_lord_rank(character:rank())
+    lord:set_coordinates(character:faction():home_region():settlement():logical_position_x() + 1, character:faction():home_region():settlement():logical_position_y() + 1)
+    lord:set_lord_region(character:faction():home_region():name())
+    lord:set_spawn_string_to_subculture_default(character:faction():subculture())
+    cm:disable_event_feed_events(true, "", "wh_event_subcategory_character_deaths", "");
+    --remove immortalitiy and registered traits
+    cm:set_character_immortality(cm:char_lookup_str(character:command_queue_index()), false);
+    for i = 1, #lord:traits() do
+        if character:has_trait(lord:traits()[i]) then
+            cm:force_remove_trait(cm:char_lookup_str(character:command_queue_index()), lord:traits()[i])
+        end
+    end
+    --kill character
+    cm:kill_character(character:command_queue_index(), true, true)
+    --turn events back on
+    cm:callback(function() cm:disable_event_feed_events(false, "", "wh_event_subcategory_character_deaths", "") end, 1);
+    cm:callback( function()
+        llr:log("spawning lord for respec!")
+        cm:create_force_with_general(
+        player_faction,
+        lord:unit_list(),
+        lord:region(),
+        lord:x(),
+        lord:y(),
+        "general",
+        lord:subtype(),
+        lord:forename(),
+        "",
+        lord:surname(),
+        "",
+        false,
+        function(cqi) 
+            llr:log("Levelling up the respec'd lord!")
+            cm:set_character_immortality(cm:char_lookup_str(cqi), true);
+            grant_quest_items(cqi, lord)
+            for i = 1, #lord:traits() do
+                cm:force_add_trait(cm:char_lookup_str(cqi), lord:traits()[i], true)
+            end
+            cm:add_agent_experience(cm:char_lookup_str(cqi), get_exp_for_level(lord:rank()))       
+            llr:log("Levelling up the respec'd lord finished.")
+            --wound the character again!
+            cm:callback(function()
+                cm:kill_character(cqi, true, true)
+            end, 0.4)
+        end)
+    end,
+    0.1
+    );
+    
     
 end
 
---v function(lord: LLR_LORD)
-local function respawn_to_pool(lord)
-
+--v function(human_faction_name: string, lord: LLR_LORD)
+local function respawn_to_pool(human_faction_name, lord)
+    cm:spawn_character_to_pool(human_faction_name, lord:forename(), lord:surname(), "", "", 18, true, "general", lord:subtype(), true, "");
 end
 
 
@@ -114,7 +206,7 @@ local function player_faction_confederation(faction_name, confederation_name)
                 respec_char_with_army(confederation_name, current_lord, character)
             end
         else
-            respawn_to_pool(current_lord)
+            respawn_to_pool(confederation_name, current_lord)
         end
     end
 end
@@ -134,9 +226,13 @@ core:add_listener(
         local confederation_name = context:confederation():name() --:string
         if cm:get_faction(confederation_name):is_human() then
             player_faction_confederation(faction_name, confederation_name)
+            llr:move_faction(faction_name, confederation_name)
         else
             llr:move_faction(faction_name, confederation_name)
         end
     end,
     true)
     
+events.FirstTickAfterWorldCreated[#events.FirstTickAfterWorldCreated+1] = function()
+    llr:activate()
+end

@@ -177,7 +177,7 @@
 --# assume CM.remove_marker: method (name: string)
 
 
---# assume CM.force_add_trait: method(character_cqi: CA_CQI, trait_key: string, showMessage: boolean)
+--# assume CM.force_add_trait: method(character_lookup: string, trait_key: string, showMessage: boolean)
 --# assume CM.force_add_trait_on_selected_character: method(trait_key: string)
 --# assume CM.force_remove_trait: method(lookup: string, trait_key: string)
 

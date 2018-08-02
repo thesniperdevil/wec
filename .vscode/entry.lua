@@ -2,7 +2,7 @@
 ---[[
 require("llr/LegendaryLordRespecs")
 require("llr/export_helpers__llr_core")
-
+require("llr/export_helpers__llr_vanilla_lords")
 --]]
 
 

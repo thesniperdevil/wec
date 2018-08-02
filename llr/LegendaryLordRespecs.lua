@@ -36,8 +36,8 @@ function LLR_ERROR_FINDER()
             --output("safeCall start");
             local status, result = pcall(func)
             if not status then
-                RCLOG(tostring(result), "ERROR CHECKER")
-                RCLOG(debug.traceback(), "ERROR CHECKER");
+                LLRLOG(tostring(result), "ERROR CHECKER")
+                LLRLOG(debug.traceback(), "ERROR CHECKER");
             end
             --output("safeCall end");
             return result;
@@ -76,21 +76,21 @@ function LLR_ERROR_FINDER()
         function tryRequire(fileName)
             local loaded_file = loadfile(fileName);
             if not loaded_file then
-                output("Failed to find mod file with name " .. fileName)
+                LLRLOG("Failed to find mod file with name " .. fileName)
             else
-                output("Found mod file with name " .. fileName)
-                output("Load start")
+                LLRLOG("Found mod file with name " .. fileName)
+                LLRLOG("Load start")
                 local local_env = getfenv(1);
                 setfenv(loaded_file, local_env);
                 loaded_file();
-                output("Load end")
+                LLRLOG("Load end")
             end
         end
         
         --v [NO_CHECK] function(f: function(), name: string)
         function logFunctionCall(f, name)
             return function(...)
-                output("function called: " .. name);
+                LLRLOG("function called: " .. name);
                 return f(...);
             end
         end
@@ -100,7 +100,7 @@ function LLR_ERROR_FINDER()
             local metatable = getmetatable(object);
             for name,f in pairs(getmetatable(object)) do
                 if is_function(f) then
-                    output("Found " .. name);
+                    LLRLOG("Found " .. name);
                     if name == "Id" or name == "Parent" or name == "Find" or name == "Position" or name == "CurrentState"  or name == "Visible"  or name == "Priority" or "Bounds" then
                         --Skip
                     else
@@ -109,12 +109,12 @@ function LLR_ERROR_FINDER()
                 end
                 if name == "__index" and not is_function(f) then
                     for indexname,indexf in pairs(f) do
-                        output("Found in index " .. indexname);
+                        LLRLOG("Found in index " .. indexname);
                         if is_function(indexf) then
                             f[indexname] = logFunctionCall(indexf, indexname);
                         end
                     end
-                    output("Index end");
+                    LLRLOG("Index end");
                 end
             end
         end
@@ -180,17 +180,11 @@ function llr_manager.init()
         __tostring = function() return "LLR_MANAGER" end
     }) --# assume self: LLR_MANAGER
 
-    self._humans = cm:get_human_factions()
     self._subculture = {} --:map<string, boolean>
-    for i = 1, #self._humans do
-        self._subculture[cm:get_faction(self._humans[i]):subculture()] = true
-    end
-
     self._factions = {} --:map<string, boolean>
     self._lords = {} --:map<string, vector<LLR_LORD>>
     self._movedFactions = {} --:map<string, string>
-    self._questSubtypes = {} --:vector<string>
-
+    self._savedQuests = {} --:map<string, vector<{item: string, level: number, subtype: string}>>
     _G.llr = self
 end
 
@@ -200,19 +194,69 @@ function llr_manager:log(text)
     LLRLOG(tostring(text))
 end
 
---v function(self: LLR_MANAGER) -->{_movedFactions: map<string, string>, _questSubtypes: vector<string>}
+--v function(self: LLR_MANAGER, faction: string, quest_info: {item: string, level: number, subtype: string})
+function llr_manager.save_quest(self, faction, quest_info)
+    self:log("saving a quest for item ["..quest_info.item.."] at leve ["..quest_info.level.."] on subtype ["..quest_info.subtype.."]")
+    if self._savedQuests[faction] == nil then 
+        self._savedQuests[faction] = {}
+    end
+    table.insert(self._savedQuests[faction], quest_info)
+end
+
+
+--v function(self: LLR_MANAGER, faction: string, quest_item: string)
+function llr_manager.delete_saved_quest(self, faction, quest_item)
+    local quests = self._savedQuests[faction]
+    local index = nil --:integer
+    for i = 1, #quests do
+        local quest = quests[i]
+        if quest.item == quest_item then
+            index = i
+            break
+        end
+    end
+    if not index == nil then
+        table.remove(quests, index)
+    else
+        self:log("COULD NOT FIND QUEST ["..quest_item.."] TO REMOVE??!")
+    end
+end
+
+
+
+--v function(self: LLR_MANAGER) -->{_movedFactions: map<string, string>, _savedQuests: map<string, vector<{item: string, level: number, subtype: string}>>}
 function llr_manager.save(self)
     local savetable = {}
     savetable._movedFactions = self._movedFactions
-    savetable._questSubtypes = self._questSubtypes
+    savetable._savedQuests = self._savedQuests
     return savetable
 end
 
---v function(self: LLR_MANAGER, loadinfo: {_movedFactions: map<string, string>, _questSubtypes: vector<string>})
+--v function(self: LLR_MANAGER, loadinfo: {_movedFactions: map<string, string>, _savedQuests: map<string, vector<{item: string, level: number, subtype: string}>>})
 function llr_manager.load(self, loadinfo)
-    self._questSubtypes = loadinfo._questSubtypes
+    self._savedQuests = loadinfo._savedQuests
     self._movedFactions = loadinfo._movedFactions
+
+    for faction, quests in pairs(self._savedQuests) do
+        for i = 1, #quests do
+            local quest = quests[i]
+            self:log("starting a listener for a saved quest for item ["..quest.item.."] at leve ["..quest.level.."] on subtype ["..quest.subtype.."]")
+            core:add_listener(
+                "llr_quest_"..quest.item,
+                "CharacterTurnStart",
+                function(context)
+                    local character = context:character() --:CA_CHAR
+                    return character:character_subtype_key() == quest.subtype and character:rank() > quest.level and character:faction():name() == faction
+                end,
+                function(context)
+                    cm:force_add_and_equip_ancillary(cm:char_lookup_str(context:character():cqi()), quest.item)
+                    self:delete_saved_quest(faction, quest.item)
+                end,
+                false)
+        end
+    end
 end
+
 
 
 
@@ -250,7 +294,7 @@ function llr_lord.new(model, faction_key, subtype,forename,surname)
     self._surnameKey = surname
     --traits and already completed quests
     self._questItemLevels = {} --:map<string, number>
-    self._questMissionLevels = {} --:map<string, number>
+    self._caQuestsSafevalues = {} --:vector<string>
     self._immortalityTraits = {} --:vector<string>
     -- value storage for respecs
     self._respawnX = nil --:number
@@ -357,37 +401,44 @@ function llr_lord.get_completed_quests(self, current_level)
     return quests
 end
 
---get the table of quests to missions
---v function(self: LLR_LORD) --> map<string, number>
-function llr_lord.quest_missions(self)
-    return self._questMissionLevels
-end
 
---add a quest mission
---v function(self: LLR_LORD, mission: string, level: number)
-function llr_lord.add_quest_mission(self, mission, level)
-    if not is_string(mission) then
-        self:log("ERROR: Tried to add a quest mission, but the suplied mission is not a string!")
-        return
-    end
-    if not is_number(level) then
-        self:log("ERROR: Tried to add a quest mission, but the supplied level is not a number!")
-        return
-    end
-    self._questMissionLevels[mission] = level
-end
-
---get all quest missions over the current level
+--get quests from below or equal to a certain level
 --v function(self: LLR_LORD, current_level: number) --> vector<string>
 function llr_lord.get_future_quests(self, current_level)
     local quests = {} --:vector<string>
-    for mission, level in pairs(self:quest_missions()) do
+    for item, level in pairs(self:quest_items()) do
         if level > current_level then
-            table.insert(quests, mission)
+            table.insert(quests, item)
         end
     end
     return quests
 end
+
+
+--v function(self: LLR_LORD, quest: string) --> number
+function llr_lord.get_level_for_quest(self, quest)
+    if self._questItemLevels[quest] == nil then
+        return 999
+    else
+        return self._questItemLevels[quest]
+    end
+end
+
+
+
+
+--get the table of quests to missions
+--v function(self: LLR_LORD) --> vector<string>
+function llr_lord.quest_save_values(self)
+    return self._caQuestsSafevalues
+end
+
+--add a CA quest savevalue
+--v function(self: LLR_LORD, save_value: string)
+function llr_lord.add_ca_quest_save_value(self, save_value)
+    table.insert(self._caQuestsSafevalues, save_value)
+end
+
 
 --v function(self: LLR_LORD) --> vector<string>
 function llr_lord.traits(self)
@@ -486,12 +537,6 @@ function llr_lord.set_lord_region(self, region)
     self._respawnRegion = region
 end
 
-
-
-
-
-
-
 --get the lord rank
 --v function(self: LLR_LORD) --> number
 function llr_lord.rank(self)
@@ -509,6 +554,18 @@ end
 ---------------------
 ---------------------
 ---------------------
+
+--set up the subculture tracking
+--v function(self: LLR_MANAGER)
+function llr_manager.activate(self)
+    local humans = cm:get_human_factions()
+    for i = 1, #humans do
+        self._subculture[cm:get_faction(humans[i]):subculture()] = true
+    end
+end
+
+
+
 
 --are we tracking this subculture?
 --v function(self: LLR_MANAGER, sub: string) --> boolean
@@ -611,6 +668,7 @@ function llr_manager.move_faction(self, moving_faction, confederation)
     local lords = self:get_lords_for_faction(moving_faction)
     for i = 1, #lords do
         self:add_lord_to_faction(confederation, lords[i])
+        lords[i]:set_faction(confederation)
     end
     --clean up their lord table.
     self:clear_and_stop_tracking(moving_faction)
@@ -644,6 +702,20 @@ function llr_manager.add_lord(self, faction, subtype, forename, surname)
     self:add_lord_to_faction(true_faction, new_lord)
     return new_lord
 end
+
+--v function (self: LLR_MANAGER, faction: string, subtype: string) --> LLR_LORD
+function llr_manager.get_lord(self, faction, subtype)
+    local lords = self._lords[faction]
+    for i = 1, #lords do
+        local lord = lords[i]
+        if lord:subtype() == subtype then
+            return lord
+        end
+    end
+    self:log("COULD NOT FIND REQUESTED LORD!")
+    return llr_lord.null_interface()
+end
+
 
 
 
