@@ -29,29 +29,19 @@ local function setup_quest_listeners(player_faction, lord)
 
     for i = 1, #lord:quest_save_values() do
         cm:set_saved_value(lord:quest_save_values()[i], true)
+        llr:log("applying saved value ["..lord:quest_save_values()[i].."] to block a quest!")
     end
     local quests = lord:get_future_quests(lord:rank())
     for i = 1, #quests do
         local quest = quests[i]
-        core:add_listener(
-            "llr_quest_"..quest,
-            "CharacterTurnStart",
-            function(context)
-                local character = context:character() --:CA_CHAR
-                return character:character_subtype_key() == lord:subtype() and character:rank() > lord:get_level_for_quest(quest) and character:faction():name() == player_faction
-            end,
-            function(context)
-                --give the ancilary
-                cm:force_add_and_equip_ancillary(cm:char_lookup_str(context:character():cqi()), quest)
-                -- remove the subtype and level from the savetable
-                llr:delete_saved_quest(player_faction, quest)
-            end,
-            false)
-            local quest_info = {}
-            quest_info.level = lord:get_level_for_quest(quest)
-            quest_info.item = quest
-            quest_info.subtype = lord:subtype()
-            llr:save_quest(player_faction, quest_info)
+        llr:log(" starting a quest listener for ["..quest.."] ")
+        local quest_info = {}
+        quest_info.level = lord:get_level_for_quest(quest)
+        quest_info.item = quest
+        quest_info.subtype = lord:subtype()
+        core:remove_listener(quest)
+        llr:save_quest(player_faction, quest_info)
+        llr:set_up_loaded_listeners()
     end
     
 end
@@ -60,6 +50,7 @@ end
 
 --v function(player_faction: string, lord: LLR_LORD, character: CA_CHAR)
 local function respec_char_with_army(player_faction, lord, character)
+    llr:log("Respecing lord with subtype ["..lord:subtype().."] who is active! ")
     --set the lord information to match the character
     lord:set_lord_rank(character:rank())
     lord:set_coordinates(character:logical_position_x(), character:logical_position_y())
@@ -118,6 +109,7 @@ end
 
 --v function(player_faction: string, lord: LLR_LORD, character: CA_CHAR)
 local function respec_wounded_character(player_faction, lord, character)
+    llr:log("Respecing lord with subtype ["..lord:subtype().."] who is wounded ")
     lord:set_lord_rank(character:rank())
     lord:set_coordinates(character:faction():home_region():settlement():logical_position_x() + 1, character:faction():home_region():settlement():logical_position_y() + 1)
     lord:set_lord_region(character:faction():home_region():name())
@@ -158,20 +150,22 @@ local function respec_wounded_character(player_faction, lord, character)
             end
             cm:add_agent_experience(cm:char_lookup_str(cqi), get_exp_for_level(lord:rank()))       
             llr:log("Levelling up the respec'd lord finished.")
-            --wound the character again!
-            cm:callback(function()
-                cm:kill_character(cqi, true, true)
-            end, 0.4)
+            lord._newCQI = cqi
+
         end)
     end,
     0.1
     );
-    
+    --wound the character again!
+    cm:callback(function()
+        cm:kill_character(lord._newCQI, true, true)
+    end, 0.5)
     
 end
 
 --v function(human_faction_name: string, lord: LLR_LORD)
 local function respawn_to_pool(human_faction_name, lord)
+    llr:log("Respawning a lord ["..lord:subtype().."] to the pool of ["..human_faction_name.."]")
     cm:spawn_character_to_pool(human_faction_name, lord:forename(), lord:surname(), "", "", 18, true, "general", lord:subtype(), true, "");
 end
 
@@ -193,20 +187,27 @@ end
 
 
 
+
+
 --v function(faction_name: string, confederation_name: string)
 local function player_faction_confederation(faction_name, confederation_name)
+    llr:log("Evaluating a confederation involving the player!")
     local lords = llr:get_lords_for_faction(faction_name)
     for i = 1, #lords do
         local current_lord = lords[i]
+        llr:log("evaluating lord with subtype ["..current_lord:subtype().."]")
         local character = lord_survived_confederation(confederation_name, current_lord:subtype())
         if character then
             if character:is_wounded() then
                 respec_wounded_character(confederation_name, current_lord, character)
+                setup_quest_listeners(confederation_name, current_lord)
             else
                 respec_char_with_army(confederation_name, current_lord, character)
+                setup_quest_listeners(confederation_name, current_lord)
             end
         else
             respawn_to_pool(confederation_name, current_lord)
+            setup_quest_listeners(confederation_name, current_lord)
         end
     end
 end
@@ -236,3 +237,4 @@ core:add_listener(
 events.FirstTickAfterWorldCreated[#events.FirstTickAfterWorldCreated+1] = function()
     llr:activate()
 end
+

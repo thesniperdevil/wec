@@ -23,7 +23,7 @@ function LLRLOG(text)
   local logTimeStamp = os.date("%d, %m %Y %X")
   local popLog = io.open("warhammer_expanded_log.txt","a")
   --# assume logTimeStamp: string
-  popLog :write("OWR:  [".. logTimeStamp .. "]:  "..logText .. "  \n")
+  popLog :write("LLR:  [".. logTimeStamp .. "]:  "..logText .. "  \n")
   popLog :flush()
   popLog :close()
 end
@@ -198,6 +198,9 @@ end
 --v function(self: LLR_MANAGER, faction: string, quest_info: {item: string, level: number, subtype: string})
 function llr_manager.save_quest(self, faction, quest_info)
     self:log("saving a quest for item ["..quest_info.item.."] at leve ["..quest_info.level.."] on subtype ["..quest_info.subtype.."]")
+    if self._savedQuests == nil then
+        self._savedQuests = {}
+    end
     if self._savedQuests[faction] == nil then 
         self._savedQuests[faction] = {}
     end
@@ -207,20 +210,19 @@ end
 
 --v function(self: LLR_MANAGER, faction: string, quest_item: string)
 function llr_manager.delete_saved_quest(self, faction, quest_item)
+    if self._savedQuests[faction] == nil then 
+        self._savedQuests[faction] = {}
+    end
     local quests = self._savedQuests[faction]
     local index = nil --:integer
     for i = 1, #quests do
         local quest = quests[i]
         if quest.item == quest_item then
-            index = i
-            break
+            table.remove(self._savedQuests[faction], i)
+            return
         end
     end
-    if not index == nil then
-        table.remove(quests, index)
-    else
-        self:log("COULD NOT FIND QUEST ["..quest_item.."] TO REMOVE??!")
-    end
+    self:log("COULD NOT FIND QUEST ["..quest_item.."] TO REMOVE??!")
 end
 
 
@@ -233,21 +235,19 @@ function llr_manager.save(self)
     return savetable
 end
 
---v function(self: LLR_MANAGER, loadinfo: {_movedFactions: map<string, string>, _savedQuests: map<string, vector<{item: string, level: number, subtype: string}>>})
-function llr_manager.load(self, loadinfo)
-    self._savedQuests = loadinfo._savedQuests
-    self._movedFactions = loadinfo._movedFactions
-
+--v function(self: LLR_MANAGER)
+function llr_manager.set_up_loaded_listeners(self)
     for faction, quests in pairs(self._savedQuests) do
         for i = 1, #quests do
             local quest = quests[i]
             self:log("starting a listener for a saved quest for item ["..quest.item.."] at leve ["..quest.level.."] on subtype ["..quest.subtype.."]")
+            core:remove_listener("llr_quest_"..quest.item)
             core:add_listener(
                 "llr_quest_"..quest.item,
                 "CharacterTurnStart",
                 function(context)
                     local character = context:character() --:CA_CHAR
-                    return character:character_subtype_key() == quest.subtype and character:rank() > quest.level and character:faction():name() == faction
+                    return character:character_subtype_key() == quest.subtype and character:rank() >= quest.level and character:faction():name() == faction
                 end,
                 function(context)
                     cm:force_add_and_equip_ancillary(cm:char_lookup_str(context:character():cqi()), quest.item)
@@ -259,6 +259,21 @@ function llr_manager.load(self, loadinfo)
 end
 
 
+
+--v function(self: LLR_MANAGER, loadinfo: {_movedFactions: map<string, string>, _savedQuests: map<string, vector<{item: string, level: number, subtype: string}>>})
+function llr_manager.load(self, loadinfo)
+
+    if loadinfo._savedQuests == nil then
+        loadinfo._savedQuests = {}
+    end
+    if loadinfo._movedFactions == nil then
+        loadinfo._movedFactions = {}
+    end
+
+    self._savedQuests = loadinfo._savedQuests
+    self._movedFactions = loadinfo._movedFactions
+    self:set_up_loaded_listeners()
+end
 
 
 -----------------------
@@ -303,7 +318,7 @@ function llr_lord.new(model, faction_key, subtype,forename,surname)
     self._respawnRegion = nil --:string
     self._respawnRank = nil --:number
     self._respawnArmyString = nil --:string
-
+    self._newCQI = nil --:CA_CQI
     return self
 end
 
@@ -393,6 +408,9 @@ end
 --get quests from below or equal to a certain level
 --v function(self: LLR_LORD, current_level: number) --> vector<string>
 function llr_lord.get_completed_quests(self, current_level)
+    if current_level == nil then
+        return {}
+    end
     local quests = {} --:vector<string>
     for item, level in pairs(self:quest_items()) do
         if level <= current_level then
@@ -407,6 +425,9 @@ end
 --v function(self: LLR_LORD, current_level: number) --> vector<string>
 function llr_lord.get_future_quests(self, current_level)
     local quests = {} --:vector<string>
+    if current_level == nil then
+        current_level = 0
+    end
     for item, level in pairs(self:quest_items()) do
         if level > current_level then
             table.insert(quests, item)
@@ -736,11 +757,10 @@ cm:add_saving_game_callback(
 --load necessary data back into the model
 cm:add_loading_game_callback(
     function(context)
-        llr_records = cm:load_named_value("llr_records", {_movedFactions = {}, _questSubtypes = {}}, context)
+        llr_records = cm:load_named_value("llr_records", {}, context)
         _G.llr:load(llr_records)
     end
 )
-
 
 
 
