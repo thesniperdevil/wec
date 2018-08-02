@@ -446,6 +446,33 @@ function llr_lord.set_unit_string_from_force(self, force)
     self._respawnArmyString = spawn_string
 end
 
+--set the spawn string to a default
+--v function(self: LLR_LORD, subculture: string) 
+function llr_lord.set_spawn_string_to_subculture_default(self, subculture)
+    local subculture_default_units = {
+        ["wh_dlc03_sc_bst_beastmen"] = "wh_dlc03_bst_inf_gor_herd_0",
+        ["wh_dlc05_sc_wef_wood_elves"] = "wh_dlc05_wef_inf_eternal_guard_1",
+        ["wh_main_sc_brt_bretonnia"] = "wh_main_brt_cav_knights_of_the_realm",
+        ["wh_main_sc_chs_chaos"] = "wh_main_chs_inf_chaos_warriors_0",
+        ["wh_main_sc_dwf_dwarfs"] = "wh_main_dwf_inf_longbeards",
+        ["wh_main_sc_emp_empire"] = "wh_main_emp_inf_swordsmen",
+        ["wh_main_sc_grn_greenskins"] = "wh_main_grn_inf_orc_big_uns",
+        ["wh_main_sc_grn_savage_orcs"] = "wh_main_grn_inf_savage_orc_big_uns",
+        ["lololol wh_main_sc_ksl_kislev"] = "wh_main_emp_inf_halberdiers",
+        ["wh_main_sc_nor_norsca"] = "wh_main_nor_inf_chaos_marauders_0",
+        ["lololol wh_main_sc_teb_teb"] = "wh_main_emp_inf_halberdiers",
+        ["wh_main_sc_vmp_vampire_counts"] = "wh_main_vmp_inf_crypt_ghouls",
+        ["wh2_dlc09_sc_tmb_tomb_kings"] = "wh2_dlc09_tmb_inf_nehekhara_warriors_0",
+        ["wh2_main_sc_def_dark_elves"] = "wh2_main_def_inf_black_ark_corsairs_0",
+        ["wh2_main_sc_hef_high_elves"] = "wh2_main_hef_inf_spearmen_0",
+        ["wh2_main_sc_lzd_lizardmen"] = "wh2_main_lzd_inf_saurus_warriors_1",
+        ["wh2_main_sc_skv_skaven"]  = "wh2_main_skv_inf_stormvermin_0"
+    }--:map<string, string>
+    
+
+
+    self._respawnArmyString = subculture_default_units[subculture]
+end
 
 --get the lord rank
 --v function(self: LLR_LORD) --> number
