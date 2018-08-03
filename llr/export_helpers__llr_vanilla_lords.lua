@@ -287,5 +287,11 @@ for i = 1, #vanilla_lords do --start looping through the information we just def
     end
 end
 
-LLRLOG("Triggering the Vanilla Lords Added Event")
-core:trigger_event("LegendaryLordVanillaLordsAdded")
+
+events.FirstTickAfterWorldCreated[#events.FirstTickAfterWorldCreated+1] = function()
+    LLRLOG("Triggering the Vanilla Lords Added Event")
+    core:trigger_event("LegendaryLordVanillaLordsAdded")
+end
+
+
+
