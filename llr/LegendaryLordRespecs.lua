@@ -507,7 +507,7 @@ function llr_lord.set_unit_string_from_force(self, force)
         table.insert(army_list, current_unit)
     end
     --now, assemble a spawn string
-    for i = 2, #army_list do --start at 2, otherwise we will capture the land unit of the lord himself!
+    for i = 2, #army_list do --start at 2, otherwise will capture the land unit of the lord himself
 
         --we want to check if the current unit is a character, and exclude them if they are
         if string.find(army_list[i], "_cha_") then
@@ -517,6 +517,16 @@ function llr_lord.set_unit_string_from_force(self, force)
             spawn_string = next_string
         end
     end
+    --fix for really strange error cases
+    --if the first character in the string is a comma, we need to fix that.
+    if string.find(spawn_string, ",") == 1 then
+        self:log("Found an error in the spawn string, correcting!")
+        fixed_string = string.sub(spawn_string, 2)
+        spawn_string = fixed_string
+    end
+ 
+
+
     self._respawnArmyString = spawn_string
 end
 
