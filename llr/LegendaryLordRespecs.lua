@@ -512,19 +512,14 @@ function llr_lord.set_unit_string_from_force(self, force)
         --we want to check if the current unit is a character, and exclude them if they are
         if string.find(army_list[i], "_cha_") then
             self:log("Skipping "..army_list[i].." because it is a character!")
+        elseif army_list[i] == "" then
+            --fix for really strange error cases
+            self:log("This entry is a blank string! Skipping it")
         else
             next_string = spawn_string..","..army_list[i]
             spawn_string = next_string
         end
     end
-    --fix for really strange error cases
-    --if the first character in the string is a comma, we need to fix that.
-    if string.find(spawn_string, ",") == 1 then
-        self:log("Found an error in the spawn string, correcting!")
-        fixed_string = string.sub(spawn_string, 2)
-        spawn_string = fixed_string
-    end
- 
 
 
     self._respawnArmyString = spawn_string
