@@ -36,7 +36,7 @@ end
 --v function(human_faction:CA_FACTION)
 local function behave_yourselves(human_faction)
     for ally, vassal in pairs(war_restricted_allies) do
-        BBALOG("")
+        BBALOG("unrestricting ally ["..ally.."] and vassal ["..vassal.."]")
         cm:force_diplomacy("faction:"..ally, "faction:"..vassal, "war", false, false, false)
     end
     local vassals = {}
@@ -55,6 +55,7 @@ local function behave_yourselves(human_faction)
         for j = 1, #vassals do
             cm:force_diplomacy("faction:"..allies[i], "faction:"..vassals[j], "war", false, false, false)
             war_restricted_allies[allies[j]] = vassals[j]
+            BBALOG("restricting ally ["..allies[j].."] and vassal ["..vassals[j].."]")
         end
     end
 end
@@ -65,9 +66,9 @@ core:add_listener(
     "BetterBehavedAlliesCore",
     "FactionTurnStart",
     function(context)
-
+        return context:faction():is_human()
     end,
     function(context)
-
+        behave_yourselves(context:faction())
     end,
     true)
