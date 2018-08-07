@@ -39,11 +39,11 @@ local function behave_yourselves(human_faction)
         BBALOG("unrestricting ally ["..ally.."] and vassal ["..vassal.."]")
         cm:force_diplomacy("faction:"..ally, "faction:"..vassal, "war", false, false, false)
     end
-    local vassals = {}
-    local allies = {}
+    local vassals = {} --:vector<string>
+    local allies = {} --:vector<string>
     local factions_met = human_faction:factions_met()
     for i = 0, factions_met:num_items() - 1 do
-        local current = factions_met:items_at(i)
+        local current = factions_met:item_at(i)
         if human_faction:allied_with(current) then
             table.insert(allies, current:name())
         end

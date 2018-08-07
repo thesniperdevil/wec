@@ -32,3 +32,7 @@ require("owr/export_helpers__owr_chs_gods")
 require("owr/export_helpers__owr_chs_cults")
 require("owr/export_helpers__owr_vmp_intrigue")
 --]]
+
+---[[
+require("bba/BetterBehavedAllies")
+--]]

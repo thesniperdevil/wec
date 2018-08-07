@@ -400,7 +400,7 @@
 --# assume CA_FACTION.military_force_list: method() --> CA_MILITARY_FORCE_LIST
 --# assume CA_FACTION.is_human: method() --> boolean
 --# assume CA_FACTION.is_dead: method() --> boolean
---# assume CA_FACTION.is_vassal_of: method(faction: string) --> boolean
+--# assume CA_FACTION.is_vassal_of: method(faction: CA_FACTION) --> boolean
 --# assume CA_FACTION.is_vassal: method() --> boolean
 --# assume CA_FACTION.is_ally_vassal_or_client_state_of: method(faction: string) --> boolean
 --# assume CA_FACTION.allied_with: method(faction: CA_FACTION)
