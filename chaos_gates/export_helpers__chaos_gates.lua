@@ -27,9 +27,16 @@ DF_CHAOS_PORTAL_BUILDING = {
 DF_CHAOS_SPAWN_CHANCE = 10
 DF_BASE_COOLDOWN = 4
 
-DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn"} --:vector<string>
+DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn",
+"wh_dlc06_chs_feral_manticore", "wh_dlc01_chs_inf_chaos_warriors_2", "wh_dlc01_chs_inf_chaos_warriors_2", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn",
+"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn"
+} --:vector<string>
 DF_CHAOS_ARMY_SIZES = {11, 13, 15} --:vector<number>
 DF_CHAOS_ARMY_FACTION = "wh2_main_chs_chaos_incursion_lzd" --:string
+
+
+
+
 
 
 --v function(text: string)
@@ -49,7 +56,20 @@ end
 
 
 
+if not not _G.sfo then
+    GOCLOG("Startup: SFO is active!")
+    DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn",
+    "chs_zelot", "chs_zelot", "chs_nurgle_sons", "chs_slaanesh_bless", "chs_khorne_berserk", "chs_chaos_dragon", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn"}
+else
+    GOCLOG("Startup: SFO not active!")
+end
 
+if cm:get_saved_value("whenever catap gets around to adding this ctt shit I guess man") == true then
+    GOCLOG("Startup: CTT is active!")
+
+else
+    GOCLOG("Startup: CTT not active!")
+end
 
 
 
