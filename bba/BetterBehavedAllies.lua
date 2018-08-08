@@ -37,7 +37,7 @@ end
 local function behave_yourselves(human_faction)
     for ally, vassal in pairs(war_restricted_allies) do
         BBALOG("unrestricting ally ["..ally.."] and vassal ["..vassal.."]")
-        cm:force_diplomacy("faction:"..ally, "faction:"..vassal, "war", false, false, false)
+        cm:force_diplomacy("faction:"..ally, "faction:"..vassal, "war", true, true, false)
     end
     local vassals = {} --:vector<string>
     local allies = {} --:vector<string>
@@ -69,6 +69,7 @@ core:add_listener(
         return context:faction():is_human()
     end,
     function(context)
+
         behave_yourselves(context:faction())
     end,
     true)
