@@ -36,3 +36,7 @@ require("owr/export_helpers__owr_vmp_intrigue")
 ---[[
 require("bba/BetterBehavedAllies")
 --]]
+
+---[[
+require("chaos_gates/export_helpers__chaos_gates")
+--]]
