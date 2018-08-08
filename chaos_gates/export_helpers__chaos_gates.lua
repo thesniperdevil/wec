@@ -24,8 +24,8 @@ DF_CHAOS_PORTAL_BUILDING = {
 "wh2_main_special_fortress_gate_unicorn_chaos_ruins",
 }--:vector<string>
 
-DF_CHAOS_SPAWN_CHANCE = 100 
-DF_BASE_COOLDOWN = 0
+DF_CHAOS_SPAWN_CHANCE = 10
+DF_BASE_COOLDOWN = 4
 
 DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn"} --:vector<string>
 DF_CHAOS_ARMY_SIZES = {11, 13, 15} --:vector<number>
