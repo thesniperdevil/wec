@@ -169,6 +169,7 @@ local function chaos_gates(region)
     end
     local cooldown = cm:get_saved_value("chaos_gates_cooldown_"..region:name())
     if cooldown > 1 then
+        GOCLOG("region ["..region:name().."] is not off cooldown! It has ["..cooldown.."] turns remaining!")
         cm:set_saved_value("chaos_gates_cooldown_"..region:name(), cooldown - 1)
         return
     end
