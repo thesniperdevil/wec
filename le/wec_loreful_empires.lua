@@ -255,21 +255,6 @@ function loreful_empires_manager.influence_battle(self, context)
 				end
 			elseif attacker_is_major == true and defender_is_major == true then
 				LELOG("DFME:Major Attacker v Major Defender");
-
-				--If two major factions clash and one of them is Karl, Karl gets a slight bonus
-				if attacking_faction:name()=="wh_main_emp_empire" then
-					if self:defensive_battles_only() == false then
-						LELOG("DFME:Modified autoresolve slightly for wh_main_emp_empire");
-						cm:modify_next_autoresolve_battle(0.8, 0.2, 0, 2, false);
-					else
-						LELOG("DFME:No autoresolve modification");
-					end
-				elseif defending_faction:name()=="wh_main_emp_empire" then
-					LELOG("DFME:Modified autoresolve slightly for wh_main_emp_empire");
-					cm:modify_next_autoresolve_battle(0.2, 0.8, 2, 0, false);
-				else
-					LELOG("DFME:No autoresolve modification");
-				end
 			elseif attacker_is_major == false and defender_is_major == false then
 				LELOG("DFME:Minor Attacker v Minor Defender\nNo autoresolve modification");
 			end
@@ -281,14 +266,14 @@ end;
 
 --v function(self: LOREFUL_EMPIRES_MANAGER)
 function loreful_empires_manager.activate(self)
-core:add_listener(
-	"GuarenteedEmpires",
-	"PendingBattle",
-	true,
-	function(context) self:influence_battle(context) end,
-	true);
-LELOG("listener init");
-core:trigger_event("LorefulEmpiresActivated")
+	core:add_listener(
+		"GuarenteedEmpires",
+		"PendingBattle",
+		true,
+		function(context) self:influence_battle(context) end,
+		true);
+	LELOG("listener init");
+	core:trigger_event("LorefulEmpiresActivated")
 end;
 
 
@@ -467,6 +452,7 @@ function loreful_empires_manager.remove_faction_from_major(self, faction_key)
 	if not is_string(faction_key) then
 		LE_ERROR("API USAGE ERROR: faction key must be a string!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 
 	if not self:is_faction_major(faction_key) then
@@ -488,6 +474,7 @@ function loreful_empires_manager.remove_faction_from_secondary(self, faction_key
 	if not is_string(faction_key) then
 		LE_ERROR("API USAGE ERROR: faction key must be a string!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 	if not self:is_faction_secondary(faction_key) then
 		LELOG("API: Called remove_faction_from_secondary for ["..faction_key.."], but this faction is not on the secondary list!")
@@ -508,6 +495,7 @@ function loreful_empires_manager.add_faction_to_major(self, faction_key)
 	if not is_string(faction_key) then
 		LE_ERROR("API USAGE ERROR: faction key must be a string!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 	if self:is_faction_major(faction_key) then
 		LELOG("API: Called add_faction_to_major for ["..faction_key.."], but this faction is already on the major list!")
@@ -526,6 +514,7 @@ function loreful_empires_manager.add_faction_to_secondary(self, faction_key)
 	if not is_string(faction_key) then
 		LE_ERROR("API USAGE ERROR: faction key must be a string!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 	if self:is_faction_secondary(faction_key) then
 		LELOG("API: This faction is already on the secondary list!")
@@ -544,6 +533,7 @@ function loreful_empires_manager.set_defensive_battles_only(self, option)
 	if not is_boolean(option) then
 		LE_ERROR("API USAGE ERROR: option must be a boolean!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 	self._defensiveBattlesOnly = option
 	LELOG("API: Set Defensive battles only to ["..tostring(option).."]")
@@ -554,6 +544,7 @@ function loreful_empires_manager.set_enable_script_for_allies(self, option)
 	if not is_boolean(option) then
 		LE_ERROR("API USAGE ERROR: option must be a boolean!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 	self._enableScriptForAllies = option
 	LELOG("API: Set Enable Script For Allies to ["..tostring(option).."]")
@@ -565,6 +556,7 @@ function loreful_empires_manager.set_nearby_player_restriction(self, option)
 	if not is_boolean(option) then
 		LE_ERROR("API USAGE ERROR: option must be a boolean!")
 		script_error("LOREFUL EMPIRES API: Incorrect argument Type: Use the logging pack to see more details!")
+		return
 	end
 	self._nearbyPlayerRestriction = option
 	LELOG("API: Set nearby player restriction to ["..tostring(option).."]")
