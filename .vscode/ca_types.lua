@@ -158,7 +158,6 @@
 --#     show_immediately: boolean,
 --#     event_picture_id: number
 --#)
-
 --# assume CM.show_message_event: method(
 --#    faction_key: string,
 --#    primary_detail: string,
@@ -177,7 +176,7 @@
 --# assume CM.remove_marker: method (name: string)
 
 
---# assume CM.force_add_trait: method(character_lookup: string, trait_key: string, showMessage: boolean)
+--# assume CM.force_add_trait: method(character_cqi: CA_CQI, trait_key: string, showMessage: boolean)
 --# assume CM.force_add_trait_on_selected_character: method(trait_key: string)
 --# assume CM.force_remove_trait: method(lookup: string, trait_key: string)
 
@@ -200,13 +199,18 @@
 --# assume CM.is_new_game: method() --> boolean
 --# assume CM.apply_effect_bundle_to_region: method(bundle: string, region: string, turns: number)
 --# assume CM.remove_effect_bundle_from_region: method(bundle: string, region: string)
---# assume CM.grant_unit_to_character: method(cqi: CA_CQI, unit: string)
+
+
+--# assume CM.grant_unit_to_character: method(lookup: string , unit: string)
+--# assume CM.remove_all_units_from_general: method(character: CA_CHAR)
+
 --# assume CM.add_saving_game_callback: method(function(context: WHATEVER))
 --# assume CM.add_loading_game_callback: method(function(context: WHATEVER))
 --# assume CM.random_number: method(num: int) --> int
 --# assume CM.apply_effect_bundle: method(bundle: string, faction: string, timer: int)
 --# assume CM.remove_effect_bundle: method(bundle: string, faction: string)
 
+--# assume CM.make_diplomacy_available: method(faction: string, other_faction: string)
 --# assume CM.force_make_peace: method(faction: string, other_faction: string)
 --# assume CM.force_declare_war: method(declarer: string, declaree: string, attacker_allies: boolean, defender_allies: boolean)
 --# assume CM.force_make_vassal: method(vassaliser: string, vassal: string)
@@ -214,6 +218,7 @@
 --# assume CM.faction_has_trade_agreement_with_faction: method( first_faction: CA_FACTION, second_faction: CA_FACTION)
 --# assume CM.faction_has_nap_with_faction: method(first_faction: CA_FACTION, second_faction: CA_FACTION)
 --# assume CM.force_confederation: method(confederator: string, confederated: string)
+--# assume CM.force_alliance: method(faction: string, other_faction:string, unknown_bool: boolean)
 
 --# assume CM.pending_battle_cache_get_defender: method(pos: int) --> (CA_CQI, CA_CQI, string)
 --# assume CM.pending_battle_cache_get_attacker: method(pos: int) --> (CA_CQI, CA_CQI, string)
@@ -221,6 +226,7 @@
 
 --# assume CM.force_change_cai_faction_personality: method(key: string, personality: string)
 --# assume CM.transfer_region_to_faction: method(region: string, faction:string)
+--# assume CM.set_region_abandoned: method(region: string)
 --# assume CM.award_experience_level: method(char_lookup_str: string, level: int)
 --# assume CM.kill_character: method(lookup: CA_CQI, kill_army: boolean, throughcq: boolean)
 --# assume CM.set_character_immortality: method(lookup: string, immortal: boolean)
@@ -230,7 +236,7 @@
 --# assume CM.get_faction: method(factionName: string) --> CA_FACTION
 --# assume CM.get_character_by_mf_cqi: method(cqi: CA_CQI) --> CA_CHAR
 --# assume CM.char_lookup_str: method(char: CA_CQI | CA_CHAR | number) --> string
---# assume CM.kill_all_armies_for_faction: method(factionName: string)
+--# assume CM.kill_all_armies_for_faction: method(factionName: CA_FACTION)
 --# assume CM.get_highest_ranked_general_for_faction: method(faction_key: string) --> CA_CHAR
 --# assume CM.force_add_and_equip_ancillary: method(lookup: string, ancillary: string)
 --# assume CM.trigger_dilemma: method(faction_key: string, dilemma_key: string, trigger_immediately: boolean)
@@ -243,7 +249,8 @@
 --# assume CM.replenish_action_points: method(lookup:string)
 --# assume CM.force_add_skill: method(lookup: string, skill_key: string)
 --# assume CM.scroll_camera_from_current: WHATEVER
-
+--# assume CM.treasury_mod: method(faction_key: string, quantity: number)
+--# assume CM.unlock_starting_general_recruitment: method(startpos: string, faction: string)
 --# assume CM.win_next_autoresolve_battle: method(faction: string)
 --# assume CM.modify_next_autoresolve_battle: method(attacker_win_chance: number, defender_win_chance: number, attacker_losses_modifier: number, defender_losses_modifier: number, wipe_out_loser: boolean)
 
@@ -278,6 +285,7 @@
 --# assume CA_CHAR.has_military_force: method() --> boolean
 --# assume CA_CHAR.is_faction_leader: method() --> boolean
 --# assume CA_CHAR.family_member: method() --> CA_CHAR
+--# assume CA_CHAR.is_null_interface: method() --> boolean
 
 -- CHARACTER LIST
 --# assume CA_CHAR_LIST.num_items: method() --> number
@@ -336,12 +344,12 @@
 --# assume CA_SETTLEMENT.slot_list: method() --> CA_SLOT_LIST
 --# assume CA_SETTLEMENT.is_port: method() --> boolean
 --# assume CA_SETTLEMENT.region: method() --> CA_REGION
-
 --SLOT LIST
 --# assume CA_SLOT_LIST.num_items: method() --> number
 --# assume CA_SLOT_LIST.item_at: method(index: number) --> CA_SLOT
 --# assume CA_SLOT_LIST.slot_type_exists: method(slot_key: string) --> boolean
 --# assume CA_SLOT_LIST.building_type_exists: method(building_key: string) --> boolean
+
 
 --SLOT
 --# assume CA_SLOT.has_building: method() --> boolean
@@ -391,7 +399,7 @@
 --# assume CA_REGION_MANAGER.region_by_key: method(key: string) --> CA_REGION
 
 
--- FACTIOM
+-- FACTION
 --# assume CA_FACTION.character_list: method() --> CA_CHAR_LIST
 --# assume CA_FACTION.treasury: method() --> number
 --# assume CA_FACTION.name: method() --> string
@@ -458,7 +466,7 @@
 --# assume global print_all_uicomponent_children: function(component: CA_UIC)
 --# assume global is_uicomponent: function(object: any) --> boolean
 --# assume global output_uicomponent: function(uic: CA_UIC, omit_children: boolean)
---# assume global wh_faction_is_horde: function(faction: CA_FACTION) --> boolean
+--# assume global faction_is_horde: function(faction: CA_FACTION) --> boolean
 --# assume global uicomponent_to_str: function(component: CA_UIC) --> string
 --# assume global is_string: function(arg: string) --> boolean
 --# assume global is_table: function(arg: table) --> boolean
@@ -476,6 +484,7 @@
 --# assume global Get_Character_Side_In_Last_Battle: function(char: CA_CHAR) --> BATTLE_SIDE
 --# assume global q_setup: function()
 --# assume global set_up_rank_up_listener: function(quest_table: vector<vector<string | number>>, subtype: string, infotext: vector<string | number>)
+
 
 
 
@@ -527,6 +536,12 @@
 --# assume MISSION_MANAGER.trigger: method(dismiss_callback: function?, delay: number?)
 --# assume CM.get_mission_manager: method(mission_key: string) --> MISSION_MANAGER
 
+-- LL UNLOCK OBJECT
+--# assume global class LL_UNLOCK
+
+
+--# assume LL_UNLOCK.new: method(faction_key: string, startpos_id: string, forename_key: string, event: string, condition: (function(context: WHATEVER) --> boolean)) --> LL_UNLOCK
+--# assume LL_UNLOCK.start: method()
 
 
 
@@ -540,4 +555,4 @@
 --# assume global __write_output_to_logfile: boolean
 --# assume global mission_manager: MISSION_MANAGER
 --# assume global rite_unlock: RITE_UNLOCK
---# assume global events: map<string, vector<function(context:WHATEVER?)>>
+--# assume global ll_unlock: LL_UNLOCK
