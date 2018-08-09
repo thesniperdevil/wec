@@ -31,7 +31,7 @@ DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_war
 "wh_dlc06_chs_feral_manticore", "wh_dlc01_chs_inf_chaos_warriors_2", "wh_dlc01_chs_inf_chaos_warriors_2", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn",
 "wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn"
 } --:vector<string>
-DF_CHAOS_ARMY_SIZES = {11, 13, 15} --:vector<number>
+DF_CHAOS_ARMY_SIZES = {9, 11, 13} --:vector<number>
 DF_CHAOS_ARMY_FACTION = "wh2_main_chs_chaos_incursion_lzd" --:string
 
 
@@ -173,6 +173,7 @@ local function spawn_chaos(region)
         true,
         function(cqi)
             GOCLOG("Spawned a chaos army at ["..region:name().."] sucessfully with cqi ["..tostring(cqi).."]")
+            cm:force_diplomacy("faction:"..DF_CHAOS_ARMY_FACTION, "faction:wh_main_chs_chaos", "war", false, true, false)
         end)
     
         cm:set_saved_value("chaos_gates_cooldown_"..region:province_name(), 18)
