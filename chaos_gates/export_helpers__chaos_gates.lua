@@ -24,7 +24,7 @@ DF_CHAOS_PORTAL_BUILDING = {
 "wh2_main_special_fortress_gate_unicorn_chaos_ruins",
 }--:vector<string>
 
-DF_CHAOS_SPAWN_CHANCE = 10
+DF_CHAOS_SPAWN_CHANCE = 8
 DF_BASE_COOLDOWN = 4
 
 DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn",
@@ -175,22 +175,22 @@ local function spawn_chaos(region)
             GOCLOG("Spawned a chaos army at ["..region:name().."] sucessfully with cqi ["..tostring(cqi).."]")
         end)
     
-        cm:set_saved_value("chaos_gates_cooldown_"..region:name(), 15)
+        cm:set_saved_value("chaos_gates_cooldown_"..region:province_name(), 18)
         if cm:is_multiplayer() then --in multiplayer games we tick twice every single round. Double the cooldown
-            cm:set_saved_value("chaos_gates_cooldown_"..region:name(), 30)
+            cm:set_saved_value("chaos_gates_cooldown_"..region:province_name(), 36)
         end
 end
 
 
 --v function (region: CA_REGION)
 local function chaos_gates(region)
-    if cm:get_saved_value("chaos_gates_cooldown_"..region:name()) == nil then
-        cm:set_saved_value("chaos_gates_cooldown_"..region:name(), DF_BASE_COOLDOWN)
+    if cm:get_saved_value("chaos_gates_cooldown_"..region:province_name()) == nil then
+        cm:set_saved_value("chaos_gates_cooldown_"..region:province_name(), DF_BASE_COOLDOWN)
     end
-    local cooldown = cm:get_saved_value("chaos_gates_cooldown_"..region:name())
+    local cooldown = cm:get_saved_value("chaos_gates_cooldown_"..region:province_name())
     if cooldown > 1 then
         GOCLOG("region ["..region:name().."] is not off cooldown! It has ["..cooldown.."] turns remaining!")
-        cm:set_saved_value("chaos_gates_cooldown_"..region:name(), cooldown - 1)
+        cm:set_saved_value("chaos_gates_cooldown_"..region:province_name(), cooldown - 1)
         return
     end
 
