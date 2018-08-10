@@ -173,7 +173,11 @@ local function spawn_chaos(region)
         true,
         function(cqi)
             GOCLOG("Spawned a chaos army at ["..region:name().."] sucessfully with cqi ["..tostring(cqi).."]")
-            cm:force_diplomacy("faction:"..DF_CHAOS_ARMY_FACTION, "faction:wh_main_chs_chaos", "war", false, true, false)
+            cm:force_diplomacy("faction:"..DF_CHAOS_ARMY_FACTION, "faction:wh_main_chs_chaos", "war", false, false, false)
+            if cm:get_faction("wh_main_chs_chaos"):is_dead() == false and cm:get_faction(DF_CHAOS_ARMY_FACTION):is_vassal_of(cm:get_faction("wh_main_chs_chaos")) then
+                GOCLOG("Making the spawned faction a vassal!")
+                cm:force_make_vassal("wh_main_chs_chaos", DF_CHAOS_ARMY_FACTION)
+            end
         end)
     
         cm:set_saved_value("chaos_gates_cooldown_"..region:province_name(), 18)
