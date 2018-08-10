@@ -1,4 +1,4 @@
-war_restricted_allies = {} --:map<string, string>
+war_restricted_allies = {} --:map<string, vector<string>>
 
 
 cm:add_saving_game_callback(
@@ -35,27 +35,34 @@ end
 
 --v function(human_faction:CA_FACTION)
 local function behave_yourselves(human_faction)
-    for ally, vassal in pairs(war_restricted_allies) do
-        BBALOG("unrestricting ally ["..ally.."] and vassal ["..vassal.."]")
-        cm:force_diplomacy("faction:"..ally, "faction:"..vassal, "war", true, true, false)
+    for ally, vassals in pairs(war_restricted_allies) do
+        for i = 1, #vassals do
+            BBALOG("unrestricting ally ["..ally.."] and vassal ["..vassals[i].."]")
+            cm:force_diplomacy("faction:"..ally, "faction:"..vassals[i], "war", true, true, false)
+        end
     end
+    war_restricted_allies = {}
     local vassals = {} --:vector<string>
     local allies = {} --:vector<string>
     local factions_met = human_faction:factions_met()
     for i = 0, factions_met:num_items() - 1 do
         local current = factions_met:item_at(i)
         if human_faction:allied_with(current) then
-            table.insert(allies, current:name())
+            if not current:is_dead() then
+                table.insert(allies, current:name())
+            end
         end
         if current:is_vassal_of(human_faction) then
-            table.insert(vassals, current:name())
+            if not current:is_dead() then
+                table.insert(vassals, current:name())
+            end
         end
     end
     for i = 1, #allies do
+        war_restricted_allies[allies[i]] = vassals
         for j = 1, #vassals do
             cm:force_diplomacy("faction:"..allies[i], "faction:"..vassals[j], "war", false, false, false)
-            war_restricted_allies[allies[j]] = vassals[j]
-            BBALOG("restricting ally ["..allies[j].."] and vassal ["..vassals[j].."]")
+            BBALOG("restricting ally ["..allies[i].."] and vassal ["..vassals[j].."]")
         end
     end
 end
@@ -69,7 +76,12 @@ core:add_listener(
         return context:faction():is_human()
     end,
     function(context)
-
+        if cm:model():turn_number() == 1 then
+            cm:force_make_vassal("wh_main_emp_empire", "wh_main_emp_middenland")
+            cm:force_make_vassal("wh_main_emp_empire", "wh_main_emp_marienburg")
+            cm:force_alliance("wh_main_emp_empire", "wh_main_emp_talabecland", true)
+            cm:force_alliance("wh_main_emp_empire", "wh_main_emp_wissenland", true)
+        end
         behave_yourselves(context:faction())
     end,
     true)

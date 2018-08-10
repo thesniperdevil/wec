@@ -24,7 +24,7 @@ DF_CHAOS_PORTAL_BUILDING = {
 "wh2_main_special_fortress_gate_unicorn_chaos_ruins",
 }--:vector<string>
 
-DF_CHAOS_SPAWN_CHANCE = 8
+DF_CHAOS_SPAWN_CHANCE = 10
 DF_BASE_COOLDOWN = 4
 
 DF_CHAOS_ARMY_LIST =  {"wh_dlc01_chs_inf_forsaken_0", "wh_main_chs_mon_chaos_warhounds_0", "wh_main_chs_mon_chaos_spawn", "wh_main_chs_mon_chaos_spawn",
@@ -174,7 +174,7 @@ local function spawn_chaos(region)
         function(cqi)
             GOCLOG("Spawned a chaos army at ["..region:name().."] sucessfully with cqi ["..tostring(cqi).."]")
             cm:force_diplomacy("faction:"..DF_CHAOS_ARMY_FACTION, "faction:wh_main_chs_chaos", "war", false, false, false)
-            if cm:get_faction("wh_main_chs_chaos"):is_dead() == false and cm:get_faction(DF_CHAOS_ARMY_FACTION):is_vassal_of(cm:get_faction("wh_main_chs_chaos")) then
+            if cm:get_faction("wh_main_chs_chaos"):is_dead() == false and cm:get_faction(DF_CHAOS_ARMY_FACTION):is_vassal_of(cm:get_faction("wh_main_chs_chaos")) == false then
                 GOCLOG("Making the spawned faction a vassal!")
                 cm:force_make_vassal("wh_main_chs_chaos", DF_CHAOS_ARMY_FACTION)
             end
@@ -212,14 +212,16 @@ local function chaos_gates(region)
     end
 
 
-    if CheckIfPlayerIsNearFaction(GetPlayerFactions(), region) == false and IsValidSpawnPoint(region:settlement():logical_position_x() + 1, region:settlement():logical_position_y() + 1) then
-        if cm:random_number(100) <= DF_CHAOS_SPAWN_CHANCE then
-            GOCLOG("Chance check passed, spawning chaos")
+
+    if cm:random_number(100) <= DF_CHAOS_SPAWN_CHANCE then
+        GOCLOG("Chance check passed, spawning chaos")
+        if CheckIfPlayerIsNearFaction(GetPlayerFactions(), region) == false and IsValidSpawnPoint(region:settlement():logical_position_x() + 1, region:settlement():logical_position_y() + 1) then
             spawn_chaos(region)
-        else
-            GOCLOG("Chance check failed, maybe next time!")
         end
+    else
+        GOCLOG("Chance check failed, maybe next time!")
     end
+
 end
 
 
