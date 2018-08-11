@@ -76,12 +76,6 @@ core:add_listener(
         return context:faction():is_human()
     end,
     function(context)
-        if cm:model():turn_number() == 1 then
-            cm:force_make_vassal("wh_main_emp_empire", "wh_main_emp_middenland")
-            cm:force_make_vassal("wh_main_emp_empire", "wh_main_emp_marienburg")
-            cm:force_alliance("wh_main_emp_empire", "wh_main_emp_talabecland", true)
-            cm:force_alliance("wh_main_emp_empire", "wh_main_emp_wissenland", true)
-        end
         behave_yourselves(context:faction())
     end,
     true)
