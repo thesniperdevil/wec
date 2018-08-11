@@ -167,8 +167,8 @@ local function spawn_chaos(region)
         DF_CHAOS_ARMY_FACTION,
         unit_string,
         region:name(),
-        region:settlement():logical_position_x() + 1,
-        region:settlement():logical_position_y() + 1,
+        region:settlement():logical_position_x() + 2,
+        region:settlement():logical_position_y() + 2,
         true,
         true,
         function(cqi)
@@ -200,7 +200,7 @@ local function chaos_gates(region)
     end
 
     if cm:is_multiplayer() then
-        if CheckIfPlayerIsNearFaction(GetPlayerFactions(), region) == false and IsValidSpawnPoint(region:settlement():logical_position_x() + 1, region:settlement():logical_position_y() + 1) then
+        if CheckIfPlayerIsNearFaction(GetPlayerFactions(), region) == false and IsValidSpawnPoint(region:settlement():logical_position_x() + 2, region:settlement():logical_position_y() + 2) then
             if cm:random_number(100) <= DF_CHAOS_SPAWN_CHANCE/2 then
                 GOCLOG("Chance check passed, spawning chaos")
                 spawn_chaos(region)
