@@ -37,8 +37,8 @@ function LLR_ERROR_FINDER()
             --output("safeCall start");
             local status, result = pcall(func)
             if not status then
-                LLRLOG(tostring(result), "ERROR CHECKER")
-                LLRLOG(debug.traceback(), "ERROR CHECKER");
+                LLRLOG(tostring(result))
+                LLRLOG(debug.traceback());
             end
             --output("safeCall end");
             return result;
