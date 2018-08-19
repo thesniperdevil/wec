@@ -200,7 +200,7 @@
 --# assume CM.apply_effect_bundle_to_region: method(bundle: string, region: string, turns: number)
 --# assume CM.remove_effect_bundle_from_region: method(bundle: string, region: string)
 
-
+--# assume CM.remove_unit_from_character: method(lookup_string: string, unitID: string)
 --# assume CM.grant_unit_to_character: method(lookup: string , unit: string)
 --# assume CM.remove_all_units_from_general: method(character: CA_CHAR)
 
@@ -315,7 +315,7 @@
 
 --#assume CA_UNIT_LIST.num_items: method() --> number
 --# assume CA_UNIT_LIST.item_at: method(j: number) --> CA_UNIT
-
+--# assume CA_UNIT_LIST.has_unit: method(unit: string) --> boolean
 
 -- REGION
 --# assume CA_REGION.settlement: method() --> CA_SETTLEMENT

@@ -18,6 +18,8 @@ require("owr/export_helpers__owr_grn_gorkmork")
 require("owr/export_helpers__owr_chs_gods")
 require("owr/export_helpers__owr_chs_cults")
 require("owr/export_helpers__owr_vmp_intrigue")
+--compat
+require("owr/compat_scripts/export_helpers__owr_zf_stanks")
 --]]
 
 ---[[ better behaved allies
