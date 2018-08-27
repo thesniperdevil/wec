@@ -176,7 +176,7 @@
 --# assume CM.remove_marker: method (name: string)
 
 
---# assume CM.force_add_trait: method(lookup: string, trait_key: string, showMessage: boolean)
+--# assume CM.force_add_trait: method(character_cqi: CA_CQI, trait_key: string, showMessage: boolean)
 --# assume CM.force_add_trait_on_selected_character: method(trait_key: string)
 --# assume CM.force_remove_trait: method(lookup: string, trait_key: string)
 
@@ -236,9 +236,11 @@
 --# assume CM.get_faction: method(factionName: string) --> CA_FACTION
 --# assume CM.get_character_by_mf_cqi: method(cqi: CA_CQI) --> CA_CHAR
 --# assume CM.char_lookup_str: method(char: CA_CQI | CA_CHAR | number) --> string
---# assume CM.kill_all_armies_for_faction: method(factionName: CA_FACTION)
+--# assume CM.kill_all_armies_for_faction: method(factionName: string)
 --# assume CM.get_highest_ranked_general_for_faction: method(faction_key: string) --> CA_CHAR
 --# assume CM.force_add_and_equip_ancillary: method(lookup: string, ancillary: string)
+--# assume CM.add_ancillary_to_faction: method(factionName: string, ancillary: string, add: boolean)
+--# assume CM.force_add_ancillary: method(CharStr: string, ancillary: string)
 --# assume CM.trigger_dilemma: method(faction_key: string, dilemma_key: string, trigger_immediately: boolean)
 --# assume CM.force_diplomacy:  method(faction: string, other_faction: string, record: string, offer: boolean, accept: boolean, enable_payments: boolean)
 --# assume CM.override_building_chain_display: method(building_chain: string, settlement_skin: string)
@@ -264,7 +266,6 @@
 
 
 -- CHARACTER
---# assume CA_CHAR.has_trait: method(traitName: string) --> boolean
 --# assume CA_CHAR.logical_position_x: method() --> number
 --# assume CA_CHAR.logical_position_y: method() --> number
 --# assume CA_CHAR.display_position_x: method() --> number
@@ -281,11 +282,20 @@
 --# assume CA_CHAR.rank: method() --> int
 --# assume CA_CHAR.won_battle: method() --> boolean
 --# assume CA_CHAR.battles_fought: method() --> number
+--# assume CA_CHAR.battles_won: method() --> number
 --# assume CA_CHAR.is_wounded: method() --> boolean
 --# assume CA_CHAR.has_military_force: method() --> boolean
+--# assume CA_CHAR.has_trait: method(traitName: string) --> boolean
+--# assume CA_CHAR.has_region: method() --> boolean
+--# assume CA_CHAR.has_ancillary: method() 
+--# assume CA_CHAR.in_settlement: method() --> boolean
 --# assume CA_CHAR.is_faction_leader: method() --> boolean
 --# assume CA_CHAR.family_member: method() --> CA_CHAR
 --# assume CA_CHAR.is_null_interface: method() --> boolean
+--# assume CA_CHAR.turns_in_enemy_regions: method() --> boolean
+--# assume CA_CHAR.turns_in_own_regions: method() --> boolean
+--# assume CA_CHAR.routed_in_battle: method() --> boolean
+--# assume CA_CHAR.is_visible_to_faction: method(faction: CA_FACTION) --> boolean
 
 -- CHARACTER LIST
 --# assume CA_CHAR_LIST.num_items: method() --> number
@@ -421,6 +431,7 @@
 --# assume CA_FACTION.faction_leader: method() --> CA_CHAR
 --# assume CA_FACTION.has_home_region: method() --> boolean
 --# assume CA_FACTION.factions_met: method() --> CA_FACTION_LIST
+--# assume CA_FACTION.holds_entire_province: method(province: string, parameter: boolean) --> boolean
 
 -- FACTION LIST
 --# assume CA_FACTION_LIST.num_items: method() --> number
@@ -445,7 +456,7 @@
 --# assume CORE.add_listener: method(
 --#     listenerName: string,
 --#     eventName: string,
---#     conditionFunc: (function(context: WHATEVER?) --> boolean) | boolean,
+--#     conditionFunc: function(context: WHATEVER?) --> boolean,
 --#     listenerFunc: function(context: WHATEVER?),
 --#     persistent: boolean
 --# )
@@ -453,8 +464,6 @@
 --# assume CORE.add_ui_created_callback: method(function())
 --# assume CORE.get_screen_resolution: method() --> (number, number)
 --# assume CORE.trigger_event: method(event_name: string)
-
-
 
 -- GLOBAL FUNCTIONS
 -- COMMON
@@ -477,6 +486,8 @@
 --# assume global script_error: function(msg: string)
 --# assume global to_number: function(n: any) --> number
 --# assume global load_script_libraries: function()
+    
+    
 
 -- CAMPAIGN
 --# assume global get_cm: function() --> CM
@@ -484,30 +495,29 @@
 --# assume global Get_Character_Side_In_Last_Battle: function(char: CA_CHAR) --> BATTLE_SIDE
 --# assume global q_setup: function()
 --# assume global set_up_rank_up_listener: function(quest_table: vector<vector<string | number>>, subtype: string, infotext: vector<string | number>)
-
-
-
-
-
-
+    
+    
+    
+    
+    
 --CA LUA OBJECTS:
-
+    
 -- RITES UNLOCK OBJECT
-
+    
 --# assume global class RITE_UNLOCK
-
+    
 --# assume RITE_UNLOCK.new: method(rite_key: string, event_name: string, condition: function(context: WHATEVER, faction_name: string)--> boolean, faction: string?) --> RITE_UNLOCK
 --# assume RITE_UNLOCK.start: method(human_faction_name: string)
-
+    
 -- MISSION MANAGER OBJECT
-
+    
 --# assume global class MISSION_MANAGER
 --# type global CA_MISSION_OBJECTIVE =
 --# "CAPTURE_REGIONS" | "SCRIPTED"
-
+    
 --creation
 --# assume MISSION_MANAGER.new: method(faction_key: string, mission_key: string, success_callback: function?, failure_callback: function?, cancellation_callback: function?) --> MISSION_MANAGER
-
+    
 --basic
 --# assume MISSION_MANAGER.add_new_objective: method(objective_type: CA_MISSION_OBJECTIVE)
 --# assume MISSION_MANAGER.add_condition: method(condition_string: string)
@@ -526,27 +536,28 @@
 --# assume MISSION_MANAGER.force_scripted_objective_success: method(script_key: string?)
 --# assume MISSION_MANAGER.force_scripted_objective_failure: method(script_key: string?)
 --# assume MISSION_MANAGER.update_scripted_objective_text: method(override_text_loc: string, script_key: string?)
-
+    
 --# assume MISSION_MANAGER.set_should_cancel_before_issuing: method(boolean)
 --# assume MISSION_MANAGER.set_should_should_whitelist: method(boolean)
-
+    
 --# assume MISSION_MANAGER.set_first_time_startup_callback: method(callback: function())
 --# assume MISSION_MANAGER.set_each_time_startup_callback: method(callback: function())
-
+    
 --# assume MISSION_MANAGER.trigger: method(dismiss_callback: function?, delay: number?)
 --# assume CM.get_mission_manager: method(mission_key: string) --> MISSION_MANAGER
-
+    
 -- LL UNLOCK OBJECT
 --# assume global class LL_UNLOCK
-
-
+    
+    
 --# assume LL_UNLOCK.new: method(faction_key: string, startpos_id: string, forename_key: string, event: string, condition: (function(context: WHATEVER) --> boolean)) --> LL_UNLOCK
 --# assume LL_UNLOCK.start: method()
-
-
-
-
-
+    
+    
+    
+    
+    
+    
 -- GLOBAL VARIABLES
 --leave at the bottom of this file
 --# assume global cm: CM
